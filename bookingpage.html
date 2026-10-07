@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#131313">
+  <title>Five Star House — Creative Production Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/theme.css" rel="stylesheet">
+</head>
+<body class="min-vh-100 d-flex flex-column">
+  <header class="site-header fixed-top border-bottom">
+    <div class="site-wrap h-20 d-flex align-items-center justify-content-between">
+      <a class="brand-link d-flex align-items-center gap-2" href="homepage.html">
+        <span class="brand-mark sq-25 bg-danger d-inline-block" aria-hidden="true"></span>
+        <span class="brand-name type-headline-sm text-uppercase ls-wider">FIVE STAR HOUSE</span>
+      </a>
+      <nav class="site-nav d-flex" aria-label="Main navigation">
+        <a class="nav-link" href="homepage.html">HOME</a>
+        <a class="nav-link" href="servicepage.html">SERVICES</a>
+        <a class="nav-link active" aria-current="page" href="bookingpage.html">BOOK</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="w-100 flex-grow-1 pt-20">
+    <div class="site-wrap py-xl py-lg-3xl">
+      <div class="d-flex flex-column gap-2 mb-2xl max-w-3xl">
+        <div class="d-flex align-items-center gap-1">
+          <span class="sq-2 bg-danger d-inline-block" aria-hidden="true"></span>
+          <span class="type-overline text-uppercase ls-25 text-danger">BOOK A PROJECT</span>
+        </div>
+        <h1 class="type-headline-mobile type-md-headline-lg type-lg-hero text-uppercase ls-tight">LET'S WORK<br>TOGETHER</h1>
+        <p class="type-body-md type-md-body-lg text-body-secondary max-w-xl">
+          Have a project in mind? Tell us about it. We'll get back to you within 24 hours with studio availability, technical capabilities, and an initial estimate.
+        </p>
+      </div>
+
+      <div class="row g-xl g-lg-xl align-items-start">
+        <div class="col-lg-7">
+          <div class="bg-dark p-4 p-md-xl shadow-2xl position-relative">
+            <div class="tick bg-danger position-absolute top-0 start-0"></div>
+            <form class="d-flex flex-column gap-4" id="booking-form">
+              <div class="row g-3">
+                <div class="col-md-6 d-flex flex-column gap-1">
+                  <label class="type-label-sm text-uppercase ls-wider" for="fullName">Full Name <span class="text-danger">*</span></label>
+                  <input class="form-control" id="fullName" placeholder="Julian Thorne" required type="text">
+                </div>
+                <div class="col-md-6 d-flex flex-column gap-1">
+                  <label class="type-label-sm text-uppercase ls-wider" for="email">Email Address <span class="text-danger">*</span></label>
+                  <input class="form-control" id="email" placeholder="you@example.com" required type="email">
+                </div>
+              </div>
+              <div class="row g-3">
+                <div class="col-md-6 d-flex flex-column gap-1">
+                  <label class="type-label-sm text-uppercase ls-wider" for="phone">Phone Number <span class="text-faint icon-10">(OPTIONAL)</span></label>
+                  <input class="form-control" id="phone" placeholder="+1 (514) 000-0000" type="tel">
+                </div>
+                <div class="col-md-6 d-flex flex-column gap-1">
+                  <label class="type-label-sm text-uppercase ls-wider" for="projectType">Project Type <span class="text-danger">*</span></label>
+                  <div class="position-relative">
+                    <select class="form-select" id="projectType" required>
+                      <option class="text-faint" disabled selected value="">Select service tier</option>
+                      <option value="film">Film &amp; Commercial Production</option>
+                      <option value="photo">Editorial &amp; Fashion Photography</option>
+                      <option value="creative">Creative Direction &amp; Treatment</option>
+                      <option value="studio">Cyclorama &amp; Soundstage Rental</option>
+                      <option value="full">Full Campaign Ecosystem</option>
+                    </select>
+                    <span class="material-symbols-outlined position-absolute top-50 end-12 translate-middle-y pe-none text-body-secondary icon-20">expand_more</span>
+                  </div>
+                </div>
+              </div>
+              <div class="row g-3">
+                <div class="col-md-6 d-flex flex-column gap-1">
+                  <label class="type-label-sm text-uppercase ls-wider" for="timeline">Target Production Date <span class="text-danger">*</span></label>
+                  <input class="form-control" id="timeline" required type="date">
+                </div>
+                <div class="col-md-6 d-flex flex-column gap-1">
+                  <label class="type-label-sm text-uppercase ls-wider" for="budget">Budget Scope <span class="text-danger">*</span></label>
+                  <div class="position-relative">
+                    <select class="form-select" id="budget" required>
+                      <option class="text-faint" disabled selected value="">Select financial scope</option>
+                      <option value="under5k">Under $5,000 CAD</option>
+                      <option value="5k-15k">$5,000 – $15,000 CAD</option>
+                      <option value="15k-30k">$15,000 – $30,000 CAD</option>
+                      <option value="30k-plus">$30,000+ CAD (Enterprise / Agency)</option>
+                    </select>
+                    <span class="material-symbols-outlined position-absolute top-50 end-12 translate-middle-y pe-none text-body-secondary icon-20">expand_more</span>
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex flex-column gap-1">
+                <label class="type-label-sm text-uppercase ls-wider" for="message">Project Brief &amp; Scope <span class="text-danger">*</span></label>
+                <textarea class="form-control" id="message" placeholder="Outline deliverables, moodboard links, location needs, and technical requirements..." required rows="5"></textarea>
+              </div>
+              <div class="pt-1">
+                <button class="btn btn-danger btn-submit w-100" id="submit-btn" type="submit">
+                  <span>SUBMIT PROJECT INQUIRY</span>
+                  <span class="material-symbols-outlined icon-20" aria-hidden="true">arrow_forward</span>
+                </button>
+                <div class="d-none mt-3 p-3 bg-secondary text-primary type-label-sm text-uppercase ls-wider align-items-center gap-2" id="form-success">
+                  <span class="material-symbols-outlined text-danger icon-20">check_circle</span>
+                  <span>Inquiry received. Studio team will respond within 24 hours.</span>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="col-lg-5 d-flex flex-column gap-xl">
+          <div class="zoom-frame zoom-slow position-relative overflow-hidden bg-dark shadow-2xl">
+            <div class="media-cover w-100 aspect-4x3 aspect-md-16x10" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDejsjaKX4SU_sGaMPJ_at0Opq3Qkq1LtzBIOKWOAPKEsXLmKSzXnLyhsbawmRCkL-zIw8dchAuuJemW4zmTOZFlDd1pJFgv0sACmGFOVrvTVTN6y8L4tRpdWJ1VwR49YYkq38lFzavIPe7BJvlPbdtEABB49ENj80XOT_ii49sO5SmYRhN7Lyav6qajWPFPzNp4ue28zz9R6N_SjSVJv3ej-qN48XDFBmaaoWF98z2y_2JlusmDE1m')"></div>
+            <div class="overlay-fade position-absolute top-0 start-0 end-0 bottom-0 opacity-80"></div>
+            <div class="position-absolute bottom-0 start-0 end-0 m-3 d-flex align-items-center justify-content-between pe-none">
+              <span class="type-overline text-uppercase ls-20 bg-dark bg-opacity-80 backdrop-md px-2 py-1">STAGE A • 1,600 SQ FT</span>
+              <span class="sq-2 rounded-circle bg-danger animate-pulse" aria-hidden="true"></span>
+            </div>
+          </div>
+
+          <div class="bg-dark p-4 p-md-xl d-flex flex-column gap-4 shadow-xl">
+            <div class="d-flex flex-column gap-2">
+              <div class="d-flex align-items-center gap-1">
+                <span class="sq-15 bg-danger" aria-hidden="true"></span>
+                <span class="type-overline text-uppercase text-danger ls-20">DIRECT CHANNELS</span>
+              </div>
+              <h2 class="type-headline-sm text-uppercase ls-wide">CONTACT</h2>
+            </div>
+            <div class="d-flex flex-column gap-3">
+              <div class="d-flex align-items-start gap-3">
+                <div class="sq-9 bg-body-secondary d-flex align-items-center justify-content-center flex-shrink-0">
+                  <span class="material-symbols-outlined text-danger icon-20">location_on</span>
+                </div>
+                <div class="d-flex flex-column">
+                  <span class="type-label-sm text-uppercase text-body-secondary ls-wider">STUDIO SANCTUARY</span>
+                  <span class="type-body-md mt-half">4th Floor, Mile-Ex / Petite Italie</span>
+                  <span class="type-body-sm text-body-tertiary">Montreal, QC — H2S 1Y4</span>
+                </div>
+              </div>
+              <div class="d-flex align-items-start gap-3">
+                <div class="sq-9 bg-body-secondary d-flex align-items-center justify-content-center flex-shrink-0">
+                  <span class="material-symbols-outlined text-danger icon-20">mail</span>
+                </div>
+                <div class="d-flex flex-column">
+                  <span class="type-label-sm text-uppercase text-body-secondary ls-wider">ELECTRONIC DESK</span>
+                  <a class="type-body-md hover-primary mt-half" href="mailto:hello@fivestarhouse.com">hello@fivestarhouse.com</a>
+                </div>
+              </div>
+              <div class="d-flex align-items-start gap-3">
+                <div class="sq-9 bg-body-secondary d-flex align-items-center justify-content-center flex-shrink-0">
+                  <span class="material-symbols-outlined text-danger icon-20">call</span>
+                </div>
+                <div class="d-flex flex-column">
+                  <span class="type-label-sm text-uppercase text-body-secondary ls-wider">DIRECT LINE</span>
+                  <a class="type-body-md hover-primary mt-half" href="tel:+15145550188">+1 514 555 0188</a>
+                </div>
+              </div>
+              <div class="d-flex align-items-start gap-3">
+                <div class="sq-9 bg-body-secondary d-flex align-items-center justify-content-center flex-shrink-0">
+                  <span class="material-symbols-outlined text-danger icon-20">schedule</span>
+                </div>
+                <div class="d-flex flex-column">
+                  <span class="type-label-sm text-uppercase text-body-secondary ls-wider">PRODUCTIONS &amp; VISITS</span>
+                  <span class="type-body-md mt-half">Mon – Fri: 9:00 AM – 7:00 PM</span>
+                  <span class="type-body-sm text-body-tertiary">24/7 Production Lockout available on request</span>
+                </div>
+              </div>
+            </div>
+            <div class="pt-3 bg-body-secondary p-3 d-flex flex-column gap-2">
+              <span class="type-label-sm text-uppercase ls-widest text-body-secondary">DIGITAL ARCHIVE</span>
+              <div class="d-flex flex-wrap align-items-center gap-3">
+                <a class="type-label-sm text-uppercase ls-wider hover-danger d-flex align-items-center gap-1" href="#">
+                  <span class="material-symbols-outlined icon-16">photo_camera</span>
+                  <span>INSTAGRAM</span>
+                </a>
+                <span class="text-faint">•</span>
+                <a class="type-label-sm text-uppercase ls-wider hover-danger d-flex align-items-center gap-1" href="#">
+                  <span class="material-symbols-outlined icon-16">play_circle</span>
+                  <span>YOUTUBE</span>
+                </a>
+                <span class="text-faint">•</span>
+                <a class="type-label-sm text-uppercase ls-wider hover-danger d-flex align-items-center gap-1" href="#">
+                  <span class="material-symbols-outlined icon-16">movie</span>
+                  <span>VIMEO</span>
+                </a>
+              </div>
+            </div>
+            <div class="p-2 bg-body-tertiary text-body-secondary type-body-sm d-flex align-items-center gap-2">
+              <span class="material-symbols-outlined text-primary icon-18">info</span>
+              <span>Studio tours strictly by confirmed appointment. Secure lot parking included.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-3xl position-relative overflow-hidden bg-dark">
+        <div class="media-cover w-100 h-64 h-md-80" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAILpiJEu_j6NrK9BOayuWw4H9y49RUdHC_3UoK4rObGHDwzlidXX5SDMTFUk7fwEpVb78iB5DAeNgX1N7xQD5l0Ryi7NNIA2YUcX9EK2GWbCVrmemve6i4-Q-ghwoWBenrYGXKfIRXV7iSe-IqSRX8jYUvtdMFa_4fZJJcQzP6VRua_5Ys6namouCDsoT1Lu3bvUKJJ0NE7Tq5HeiPNhRMzIdmS5yxLuWgtIOLUMRsZsgaDpGl7baH')"></div>
+        <div class="overlay-sky position-absolute top-0 start-0 end-0 bottom-0"></div>
+        <div class="position-absolute top-0 start-0 end-0 bottom-0 p-4 p-md-xl d-flex flex-column justify-content-end">
+          <div class="d-flex flex-column flex-md-row align-items-md-end justify-content-between gap-3">
+            <div class="d-flex flex-column gap-1">
+              <span class="type-overline text-uppercase ls-25 text-danger">STUDIO DISTRICT</span>
+              <span class="type-headline-md text-uppercase ls-wider">MILE-EX • MONTREAL</span>
+              <p class="type-body-sm text-body-secondary max-w-md">Located within the city's foremost creative and technological nexus, engineered for seamless production transit and loading access.</p>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+              <div class="d-flex flex-column text-end">
+                <span class="type-label-sm text-uppercase ls-widest">FREIGHT ELEVATOR</span>
+                <span class="type-body-sm text-body-tertiary">CAPACITY: 4,500 LBS • DIRECT ACCESS</span>
+              </div>
+              <div class="sq-10 bg-danger d-flex align-items-center justify-content-center flex-shrink-0 text-cream">
+                <span class="material-symbols-outlined icon-24">local_shipping</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="w-100 bg-dark border-top position-relative overflow-hidden">
+    <div class="position-absolute start-0 end-0 bottom-0 pe-none opacity-15 d-flex align-items-end justify-content-center user-select-none overflow-hidden h-40">
+      <svg class="footer-skyline w-100 h-100" preserveAspectRatio="none" viewBox="0 0 1200 160" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M0,160 L0,110 L30,110 L30,85 L45,85 L45,110 L80,110 L80,70 L95,70 L95,110 L130,110 L130,50 L140,50 L140,40 L145,40 L145,50 L170,50 L170,110 L210,110 L210,95 L235,95 L235,65 L260,65 L260,110 L310,110 L310,30 L320,30 L320,10 L323,10 L323,30 L345,30 L345,110 L390,110 L390,80 L420,80 L420,110 L470,110 L470,55 L485,55 L485,45 L500,45 L500,55 L530,55 L530,110 L580,110 L580,75 L615,75 L615,110 L660,110 L660,35 L685,35 L685,110 L730,110 L730,90 L760,90 L760,110 L800,110 L800,60 L830,60 L830,110 L880,110 L880,45 L895,45 L895,20 L898,20 L898,45 L925,45 L925,110 L970,110 L970,75 L1010,75 L1010,110 L1060,110 L1060,50 L1090,50 L1090,110 L1140,110 L1140,85 L1170,85 L1170,110 L1200,110 L1200,160 Z"></path>
+      </svg>
+    </div>
+    <div class="position-relative z-1 site-wrap py-2xl d-flex flex-column flex-md-row align-items-start align-items-md-end justify-content-between gap-xl">
+      <div class="d-flex flex-column gap-2">
+        <div class="d-flex align-items-center gap-2">
+          <span class="sq-3 bg-danger d-inline-block" aria-hidden="true"></span>
+          <span class="type-headline-sm text-uppercase ls-wider">FIVE STAR HOUSE</span>
+        </div>
+        <p class="type-overline text-uppercase ls-20 text-primary">FILM • PHOTO • CREATIVE PRODUCTION</p>
+      </div>
+      <div class="d-flex flex-column align-items-md-end gap-1">
+        <p class="type-body-sm text-body-secondary ls-wider text-uppercase">MONTREAL, CANADA — © 2025 FIVE STAR HOUSE</p>
+        <p class="type-label-sm text-body-tertiary text-uppercase ls-widest">45.5017° N, 73.5673° W • STUDIO REF: 5SH-YUL</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById("booking-form").addEventListener("submit", function (event) {
+      event.preventDefault();
+      const btn = document.getElementById("submit-btn");
+      const alertBox = document.getElementById("form-success");
+      btn.classList.add("opacity-50", "pe-none");
+      btn.innerHTML = "TRANSMITTING INQUIRY...";
+
+      setTimeout(function () {
+        btn.classList.remove("opacity-50", "pe-none");
+        btn.innerHTML = '<span>INQUIRY LOGGED</span><span class="material-symbols-outlined icon-20">check</span>';
+        alertBox.classList.remove("d-none");
+        alertBox.classList.add("d-flex");
+        document.getElementById("booking-form").reset();
+      }, 900);
+    });
+  </script>
+</body>
+</html>
