@@ -339,6 +339,11 @@ html { scrollbar-width: none; scroll-padding-top: 5rem; }
 
 .project-card,
 .zoom-frame { background: var(--panel); }
+.project-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
 .zoom-frame > .media-cover {
   position: absolute;
   inset: 0;

@@ -1,0 +1,104 @@
+.cal-head, .cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: .35rem;
+}
+
+.cal-head span,
+.cal-day {
+  text-align: center;
+  font-family: var(--display);
+}
+
+.cal-head span {
+  color: var(--outline);
+  font-size: .68rem;
+  letter-spacing: .12em;
+}
+
+.cal-day {
+  min-height: 2.8rem;
+  border: 0;
+  background: #1c1b1b;
+  color: var(--copy);
+}
+
+.cal-cell,
+.hour-wrap { position: relative; }
+.cal-cell .cal-day { width: 100%; }
+.cal-cell:hover,
+.hour-wrap:hover { z-index: 6; }
+
+.cal-day.outside { visibility: hidden; }
+.cal-day.past { opacity: .35; }
+.cal-day.booked,
+.hour-chip.booked {
+  background: var(--red);
+  color: var(--cream);
+  opacity: 1;
+  text-decoration: none;
+}
+.cal-day.selected { background: var(--red); color: var(--cream); }
+.cal-day.booked.selected { outline: 2px solid var(--cream); outline-offset: -3px; }
+
+.cal-tip {
+  display: none;
+  position: absolute;
+  z-index: 7;
+  left: 0;
+  bottom: calc(100% + .35rem);
+  width: max-content;
+  max-width: 16rem;
+  padding: .65rem .75rem;
+  background: #0e0e0e;
+  border: 1px solid var(--red);
+  color: var(--copy);
+  text-align: left;
+  pointer-events: none;
+}
+.cal-grid .cal-cell:nth-child(7n) .cal-tip,
+.cal-grid .cal-cell:nth-child(7n-1) .cal-tip { left: auto; right: 0; }
+.cal-cell:hover .cal-tip,
+.hour-wrap:hover .cal-tip,
+.cal-cell:focus-within .cal-tip,
+.hour-wrap:focus-within .cal-tip {
+  display: flex;
+  flex-direction: column;
+  gap: .55rem;
+}
+.cal-tip-item {
+  display: flex;
+  flex-direction: column;
+  gap: .15rem;
+  font-family: var(--body);
+  font-size: .75rem;
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.cal-tip-item strong {
+  font-family: var(--display);
+  font-size: .8rem;
+  letter-spacing: .04em;
+}
+
+.hour-row { display: flex; flex-wrap: wrap; gap: .5rem; }
+.hour-chip {
+  border: 0;
+  background: #1c1b1b;
+  color: var(--copy);
+  padding: .7rem .85rem;
+  font-family: var(--display);
+  letter-spacing: .08em;
+}
+.hour-chip.selected { background: var(--red); color: var(--cream); }
+
+.choice-card {
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+  min-height: 100%;
+  background: #1c1b1b;
+  padding: 1.5rem;
+}
+.choice-card:hover { background: #2a2a2a; }
