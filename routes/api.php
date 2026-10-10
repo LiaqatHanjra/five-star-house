@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\Admin\StudioAdminController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\PublicContentController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Artisan;
 
 Route::get('/home', [PublicContentController::class, 'home']);
 Route::get('/services', [PublicContentController::class, 'services']);
@@ -24,6 +25,11 @@ Route::get('/bookings/{reference}/payment/verify', [BookingController::class, 'v
 Route::post('/stripe/webhook', [BookingController::class, 'stripeWebhook']);
 
 Route::post('/admin/login', [AuthController::class, 'login']);
+
+Route::get('run-migrations', function () {
+    Artisan::call('migrate');
+    return redirect()->back()->with('success', 'Migration completed successfully.');
+});
 
 Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
