@@ -41,7 +41,7 @@ async function logout() {
         <RouterLink to="/admin/bookings">Bookings</RouterLink>
         <RouterLink to="/admin/payments">Payments</RouterLink>
         <RouterLink to="/admin/customers">Customers</RouterLink>
-        <RouterLink to="/admin/settings">Site settings</RouterLink>
+        <RouterLink to="/admin/settings">Pricing &amp; settings</RouterLink>
         <RouterLink to="/admin/booking-images">Booking images</RouterLink>
       </nav>
       <div class="mt-auto d-flex flex-column gap-2">

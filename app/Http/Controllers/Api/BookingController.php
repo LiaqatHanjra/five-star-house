@@ -30,7 +30,8 @@ class BookingController extends Controller
         $pairs = SiteSetting::allPairs();
         $public = [
             'owner_name', 'phone', 'address', 'open_time', 'close_time',
-            'minimum_hours', 'currency', 'studio_hourly_rate', 'event_hourly_rate', 'owner_hourly_rate',
+            'minimum_hours', 'studio_minimum_hours', 'currency',
+            'studio_hourly_rate', 'event_hourly_rate', 'owner_hourly_rate',
         ];
 
         return response()->json([
@@ -43,9 +44,15 @@ class BookingController extends Controller
         $data = $request->validate([
             'month' => ['nullable', 'date_format:Y-m'],
             'date' => ['nullable', 'date'],
+            'booking_kind' => ['nullable', Rule::in(['service', 'studio_time', 'studio_event', 'owner_event'])],
+            'service_id' => ['required_if:booking_kind,service', 'nullable', 'integer', 'exists:services,id'],
         ]);
 
         $window = $this->schedule->window();
+        $minimumHours = isset($data['booking_kind'])
+            ? $this->rateFor($data['booking_kind'], isset($data['service_id']) ? (int) $data['service_id'] : null)['minimum_hours']
+            : $window['minimum_hours'];
+        $window['minimum_hours'] = $minimumHours;
         $payload = ['window' => $window];
 
         if (! empty($data['month'])) {
@@ -53,7 +60,7 @@ class BookingController extends Controller
         }
 
         if (! empty($data['date'])) {
-            $payload['slots'] = $this->schedule->daySlots($data['date']);
+            $payload['slots'] = $this->schedule->daySlots($data['date'], $minimumHours);
         }
 
         return response()->json($payload);
@@ -63,11 +70,16 @@ class BookingController extends Controller
     {
         $data = $request->validate([
             'booking_kind' => ['required', Rule::in(['service', 'studio_time', 'studio_event', 'owner_event'])],
-            'service_id' => ['nullable', 'integer', 'exists:services,id'],
-            'hours' => ['required', 'integer', 'min:2', 'max:12'],
+            'service_id' => ['required_if:booking_kind,service', 'nullable', 'integer', 'exists:services,id'],
+            'hours' => ['required', 'integer', 'min:1', 'max:12'],
         ]);
 
         $rate = $this->rateFor($data['booking_kind'], $data['service_id'] ?? null);
+        if ($data['hours'] < $rate['minimum_hours']) {
+            return response()->json([
+                'message' => 'This booking needs at least '.$rate['minimum_hours'].' hours.',
+            ], 422);
+        }
 
         return response()->json([
             'hourly_rate' => $rate['hourly_rate'],
@@ -86,7 +98,7 @@ class BookingController extends Controller
             'service_id' => ['nullable', 'integer', 'exists:services,id'],
             'booking_date' => ['required', 'date', 'after_or_equal:today'],
             'start_time' => ['required', 'date_format:H:i'],
-            'hours' => ['required', 'integer', 'min:2', 'max:12'],
+            'hours' => ['required', 'integer', 'min:1', 'max:12'],
             'full_name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'email', 'max:180'],
             'phone' => ['nullable', 'string', 'max:40'],
@@ -106,7 +118,12 @@ class BookingController extends Controller
             ], 422);
         }
 
-        if (! $this->schedule->isAvailable($data['booking_date'], $data['start_time'], (int) $data['hours'])) {
+        if (! $this->schedule->isAvailable(
+            $data['booking_date'],
+            $data['start_time'],
+            (int) $data['hours'],
+            $rate['minimum_hours']
+        )) {
             return response()->json([
                 'message' => 'That time is already booked or outside studio hours.',
             ], 422);
@@ -445,9 +462,11 @@ class BookingController extends Controller
         };
 
         return [
-            'hourly_rate' => (float) SiteSetting::getValue($key, '150'),
+            'hourly_rate' => (float) SiteSetting::getValue($key, $kind === 'studio_time' ? '75' : '150'),
             'currency' => $currency,
-            'minimum_hours' => $minimum,
+            'minimum_hours' => $kind === 'studio_time'
+                ? max(1, (int) SiteSetting::getValue('studio_minimum_hours', '1'))
+                : $minimum,
             'label' => $label,
         ];
     }

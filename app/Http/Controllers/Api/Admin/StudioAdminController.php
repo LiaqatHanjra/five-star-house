@@ -47,6 +47,7 @@ class StudioAdminController extends Controller
             'open_time' => ['required', 'date_format:H:i'],
             'close_time' => ['required', 'date_format:H:i'],
             'minimum_hours' => ['required', 'integer', 'min:2', 'max:12'],
+            'studio_minimum_hours' => ['required', 'integer', 'min:1', 'max:12'],
             'currency' => ['required', 'string', 'size:3'],
             'studio_hourly_rate' => ['required', 'numeric', 'min:0'],
             'event_hourly_rate' => ['required', 'numeric', 'min:0'],

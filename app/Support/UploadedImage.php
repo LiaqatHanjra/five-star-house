@@ -15,8 +15,16 @@ class UploadedImage
 
         if ($current && str_starts_with($current, '/storage/uploads/')) {
             Storage::disk('public')->delete(substr($current, strlen('/storage/')));
+        } elseif ($current) {
+            $spaces = Storage::disk('spaces');
+            $urlPrefix = rtrim($spaces->url(''), '/').'/';
+            if (str_starts_with($current, $urlPrefix)) {
+                $spaces->delete(substr($current, strlen($urlPrefix)));
+            }
         }
 
-        return '/storage/'.$file->store('uploads', 'public');
+        $path = $file->storePublicly('uploads', 'spaces');
+
+        return Storage::disk('spaces')->url($path);
     }
 }

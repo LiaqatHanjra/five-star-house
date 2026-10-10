@@ -12,27 +12,33 @@ onMounted(async () => {
   options.value = [
     {
       to: '/book/studio-time',
-      kicker: 'STUDIO TIME',
-      title: 'Book the studio',
-      copy: 'Hold the room for a shoot, a session, or any open hours. Minimum 2 hours.',
+      kicker: 'STUDIO RENTAL',
+      title: 'Rent the studio',
+      copy: `Hold the room for a shoot, a session, or any open hours. Minimum ${settings.studio_minimum_hours || 1} hour${Number(settings.studio_minimum_hours || 1) === 1 ? '' : 's'}.`,
       rate: settings.studio_hourly_rate,
       currency,
+      minimumHours: settings.studio_minimum_hours || 1,
+      fixedRate: true,
     },
     {
       to: '/book/studio-event',
       kicker: 'AN EVENT',
       title: 'Book the studio for an event',
-      copy: 'A launch, a listening party, a dinner, or a private screening in the house.',
+      copy: `A launch, a listening party, a dinner, or a private screening in the house. Minimum ${settings.minimum_hours || 2} hours.`,
       rate: settings.event_hourly_rate,
       currency,
+      minimumHours: settings.minimum_hours || 2,
+      fixedRate: false,
     },
     {
       to: '/book/owner-event',
       kicker: 'THE OWNER',
       title: 'Book the owner for an event',
-      copy: 'The owner directs, shoots, or hosts. The clock starts at two hours.',
+      copy: `The owner directs, shoots, or hosts. Minimum ${settings.minimum_hours || 2} hours.`,
       rate: settings.owner_hourly_rate,
       currency,
+      minimumHours: settings.minimum_hours || 2,
+      fixedRate: false,
     },
   ]
 })
@@ -47,7 +53,7 @@ onMounted(async () => {
       </div>
       <h1 class="type-headline-mobile type-md-headline-lg text-uppercase">CHOOSE A BOOKING</h1>
       <p class="type-body-lg text-body-secondary max-w-xl">
-        Book the studio for a block of time, book it for an event, or book the owner. Every booking starts at two hours. Taken hours show on the calendar.
+        Rent the studio by the hour, book it for an event, or book the owner. Studio rental starts at one hour. Taken hours show on the calendar.
       </p>
     </div>
     <div class="row g-3">
@@ -56,7 +62,7 @@ onMounted(async () => {
           <span class="type-overline text-uppercase text-danger">{{ option.kicker }}</span>
           <h2 class="type-headline-sm text-uppercase">{{ option.title }}</h2>
           <p class="type-body-md text-body-secondary mb-0">{{ option.copy }}</p>
-          <span class="type-label-sm text-uppercase text-primary">FROM {{ formatMoney(option.rate, option.currency) }} / HOUR</span>
+          <span class="type-label-sm text-uppercase text-primary">{{ option.fixedRate ? '' : 'FROM ' }}{{ formatMoney(option.rate, option.currency) }} / HOUR</span>
         </RouterLink>
       </div>
     </div>

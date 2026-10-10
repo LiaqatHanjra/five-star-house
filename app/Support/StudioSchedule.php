@@ -48,11 +48,11 @@ class StudioSchedule
         return $this->hoursCovered($this->blockingBookings($date), $date);
     }
 
-    public function daySlots(string $date): array
+    public function daySlots(string $date, ?int $minimumHours = null): array
     {
         $bookings = $this->blockingBookings($date);
         $booked = $this->hoursCovered($bookings, $date);
-        $minimum = $this->window()['minimum_hours'];
+        $minimum = $minimumHours ?? $this->window()['minimum_hours'];
 
         return array_map(function (string $time) use ($date, $booked, $minimum, $bookings) {
             $covering = $bookings
@@ -86,10 +86,10 @@ class StudioSchedule
             ->all();
     }
 
-    public function isAvailable(string $date, string $start, int $hours): bool
+    public function isAvailable(string $date, string $start, int $hours, ?int $minimumHours = null): bool
     {
         $window = $this->window();
-        if ($hours < $window['minimum_hours']) {
+        if ($hours < ($minimumHours ?? $window['minimum_hours'])) {
             return false;
         }
 

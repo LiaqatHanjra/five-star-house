@@ -10,8 +10,9 @@ const form = reactive({
   open_time: '09:00',
   close_time: '19:00',
   minimum_hours: 2,
+  studio_minimum_hours: 1,
   currency: 'CAD',
-  studio_hourly_rate: 150,
+  studio_hourly_rate: 75,
   event_hourly_rate: 250,
   owner_hourly_rate: 300,
 })
@@ -23,6 +24,7 @@ onMounted(async () => {
   const data = await api('/api/admin/settings')
   Object.assign(form, data.settings)
   form.minimum_hours = Number(form.minimum_hours)
+  form.studio_minimum_hours = Number(form.studio_minimum_hours)
 })
 
 async function save() {
@@ -30,7 +32,14 @@ async function save() {
   message.value = ''
   error.value = ''
   try {
-    const data = await api('/api/admin/settings', { method: 'POST', body: { ...form, minimum_hours: Number(form.minimum_hours) } })
+    const data = await api('/api/admin/settings', {
+      method: 'POST',
+      body: {
+        ...form,
+        minimum_hours: Number(form.minimum_hours),
+        studio_minimum_hours: Number(form.studio_minimum_hours),
+      },
+    })
     Object.assign(form, data.settings)
     message.value = 'Settings saved.'
   } catch (e) {
@@ -80,12 +89,18 @@ async function save() {
       </div>
     </div>
     <div class="row g-3">
+      <div class="col-md-4 d-flex flex-column gap-1">
+        <label class="type-label-sm text-uppercase">Studio rental minimum hours</label>
+        <input v-model.number="form.studio_minimum_hours" class="form-control" min="1" max="12" required type="number">
+      </div>
+    </div>
+    <div class="row g-3">
       <div class="col-md-3 d-flex flex-column gap-1">
         <label class="type-label-sm text-uppercase">Currency</label>
         <input v-model="form.currency" class="form-control" maxlength="3" required>
       </div>
       <div class="col-md-3 d-flex flex-column gap-1">
-        <label class="type-label-sm text-uppercase">Studio / hour</label>
+        <label class="type-label-sm text-uppercase">Studio rental / hour</label>
         <input v-model="form.studio_hourly_rate" class="form-control" min="0" required step="0.01" type="number">
       </div>
       <div class="col-md-3 d-flex flex-column gap-1">
@@ -97,6 +112,9 @@ async function save() {
         <input v-model="form.owner_hourly_rate" class="form-control" min="0" required step="0.01" type="number">
       </div>
     </div>
+    <p class="type-body-sm text-body-secondary mb-0">
+      Studio rental bookings are paid through Stripe checkout. Configure the Stripe secret and webhook keys in the server environment to accept online payments.
+    </p>
     <button class="btn btn-danger btn-quote align-self-start" :disabled="saving" type="submit">{{ saving ? 'Saving...' : 'Save settings' }}</button>
   </form>
 </template>

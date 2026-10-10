@@ -91,7 +91,12 @@ function shiftMonth(step) {
 }
 
 async function loadMonth() {
-  const data = await api(`/api/availability?month=${monthKey.value}`)
+  const params = new URLSearchParams({
+    month: monthKey.value,
+    booking_kind: kind.value,
+  })
+  if (service.value?.id) params.set('service_id', service.value.id)
+  const data = await api(`/api/availability?${params}`)
   windowInfo.value = data.window
   marks.value = data.marks || {}
 }
@@ -100,7 +105,12 @@ async function selectDate(day) {
   if (!day.iso || day.past) return
   selectedDate.value = day.iso
   startTime.value = ''
-  const data = await api(`/api/availability?date=${day.iso}`)
+  const params = new URLSearchParams({
+    date: day.iso,
+    booking_kind: kind.value,
+  })
+  if (service.value?.id) params.set('service_id', service.value.id)
+  const data = await api(`/api/availability?${params}`)
   slots.value = data.slots || []
   windowInfo.value = data.window
 }
@@ -157,6 +167,7 @@ onMounted(async () => {
     hours.value = data.service.minimum_hours || 2
   }
   await loadMonth()
+  if (!service.value) hours.value = windowInfo.value.minimum_hours || 2
   await refreshQuote()
 })
 </script>
