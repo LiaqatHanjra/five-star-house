@@ -64,7 +64,7 @@ class ServiceController extends Controller
             'charge' => ['required', 'numeric', 'min:0', 'max:999999.99'],
             'currency' => ['required', 'string', 'size:3'],
             'charge_unit' => ['required', Rule::in(['hour', 'project', 'day'])],
-            'minimum_hours' => ['nullable', 'integer', 'min:2', 'max:12'],
+            'minimum_hours' => ['nullable', 'integer', 'min:1', 'max:12'],
             'image_url' => ['nullable', 'string', 'max:2048'],
             'tags' => ['nullable', 'string', 'max:1000'],
             'cta_label' => ['required', 'string', 'max:80'],
@@ -89,7 +89,7 @@ class ServiceController extends Controller
         $data['sort_order'] = $data['sort_order'] ?? 0;
         $data['is_active'] = $request->boolean('is_active', $service === null);
         $data['currency'] = strtoupper($data['currency']);
-        $data['minimum_hours'] = $data['minimum_hours'] ?? 2;
+        $data['minimum_hours'] = $data['minimum_hours'] ?? 1;
         unset($data['image']);
 
         return $data;

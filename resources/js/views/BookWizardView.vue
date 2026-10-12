@@ -3,18 +3,19 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '../api'
 import { formatMoney } from '../format'
-import { dateLocale, hourUnit, statusLabel, t, tp } from '../i18n'
+import { dateLocale, hourUnit, locale, statusLabel, t, tp } from '../i18n'
 
 const route = useRoute()
 const router = useRouter()
 const service = ref(null)
-const windowInfo = ref({ open: '09:00', close: '19:00', minimum_hours: 2, currency: 'CAD' })
+const pageContent = ref(null)
+const windowInfo = ref({ open: '09:00', close: '19:00', minimum_hours: 1, currency: 'CAD' })
 const marks = ref({})
 const slots = ref([])
 const cursor = ref(new Date())
 const selectedDate = ref('')
 const startTime = ref('')
-const hours = ref(2)
+const hours = ref(1)
 const error = ref('')
 const sending = ref(false)
 const quote = ref(null)
@@ -35,7 +36,16 @@ const kind = computed(() => {
   return 'studio_time'
 })
 
-const title = computed(() => service.value?.title || t(`book.titles.${kind.value}`))
+const title = computed(() => {
+  if (service.value?.title) return service.value.title
+  const text = pageContent.value?.[locale.value] || {}
+  const key = {
+    studio_time: 'studio_title',
+    studio_event: 'event_title',
+    owner_event: 'owner_title',
+  }[kind.value]
+  return text[key] || t(`book.titles.${kind.value}`)
+})
 
 const needsEvent = computed(() => kind.value === 'studio_event' || kind.value === 'owner_event')
 const monthKey = computed(() => `${cursor.value.getFullYear()}-${String(cursor.value.getMonth() + 1).padStart(2, '0')}`)
@@ -67,18 +77,18 @@ const days = computed(() => {
 })
 
 const maxHours = computed(() => {
-  if (!startTime.value) return windowInfo.value.minimum_hours || 2
+  if (!startTime.value) return windowInfo.value.minimum_hours || 1
   const index = slots.value.findIndex((slot) => slot.time === startTime.value)
   let count = 0
   for (let i = index; i < slots.value.length; i += 1) {
     if (slots.value[i].booked) break
     count += 1
   }
-  return Math.max(count, windowInfo.value.minimum_hours || 2)
+  return Math.max(count, windowInfo.value.minimum_hours || 1)
 })
 
 const hourChoices = computed(() => {
-  const min = service.value?.minimum_hours || windowInfo.value.minimum_hours || 2
+  const min = service.value?.minimum_hours || windowInfo.value.minimum_hours || 1
   const list = []
   for (let value = min; value <= maxHours.value; value += 1) list.push(value)
   return list.length ? list : [min]
@@ -116,7 +126,7 @@ async function selectDate(day) {
 function pickStart(slot) {
   if (!slot.can_start) return
   startTime.value = slot.time
-  const min = service.value?.minimum_hours || windowInfo.value.minimum_hours || 2
+  const min = service.value?.minimum_hours || windowInfo.value.minimum_hours || 1
   hours.value = min
 }
 
@@ -159,13 +169,16 @@ watch(hours, refreshQuote)
 watch(monthKey, loadMonth)
 
 onMounted(async () => {
+  api('/api/studio').then((data) => {
+    pageContent.value = data.content || null
+  }).catch(() => {})
   if (route.params.slug) {
     const data = await api(`/api/services/${route.params.slug}`)
     service.value = data.service
-    hours.value = data.service.minimum_hours || 2
+    hours.value = data.service.minimum_hours || 1
   }
   await loadMonth()
-  if (!service.value) hours.value = windowInfo.value.minimum_hours || 2
+  if (!service.value) hours.value = windowInfo.value.minimum_hours || 1
   await refreshQuote()
 })
 </script>
@@ -173,7 +186,7 @@ onMounted(async () => {
 <template>
   <div class="site-wrap py-xl py-lg-3xl d-flex flex-column gap-4">
     <div>
-      <p class="type-overline text-uppercase ls-20 text-danger">{{ tp('wizard.minimum', service?.minimum_hours || windowInfo.minimum_hours || 2) }}</p>
+      <p class="type-overline text-uppercase ls-20 text-danger">{{ tp('wizard.minimum', service?.minimum_hours || windowInfo.minimum_hours || 1) }}</p>
       <h1 class="type-headline-md text-uppercase">{{ title }}</h1>
       <p v-if="quote" class="type-body-md text-primary mb-0">{{ tp('wizard.quote', hours, { rate: formatMoney(quote.hourly_rate, quote.currency), total: formatMoney(quote.amount, quote.currency) }) }}</p>
     </div>

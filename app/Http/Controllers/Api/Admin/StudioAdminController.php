@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\SiteSetting;
+use App\Support\BookingPageContent;
 use Illuminate\Http\Request;
 
 class StudioAdminController extends Controller
@@ -46,7 +47,7 @@ class StudioAdminController extends Controller
             'address' => ['nullable', 'string', 'max:180'],
             'open_time' => ['required', 'date_format:H:i'],
             'close_time' => ['required', 'date_format:H:i'],
-            'minimum_hours' => ['required', 'integer', 'min:2', 'max:12'],
+            'minimum_hours' => ['required', 'integer', 'min:1', 'max:12'],
             'studio_minimum_hours' => ['required', 'integer', 'min:1', 'max:12'],
             'currency' => ['required', 'string', 'size:3'],
             'studio_hourly_rate' => ['required', 'numeric', 'min:0'],
@@ -58,5 +59,30 @@ class StudioAdminController extends Controller
         SiteSetting::putPairs($data);
 
         return response()->json(['settings' => SiteSetting::allPairs()]);
+    }
+
+    public function bookingPage()
+    {
+        return response()->json(['content' => BookingPageContent::resolved()]);
+    }
+
+    public function updateBookingPage(Request $request)
+    {
+        $rules = [];
+        foreach (BookingPageContent::LOCALES as $locale) {
+            foreach (BookingPageContent::FIELDS as $field) {
+                $rules[$locale.'.'.$field] = ['required', 'string', 'max:'.BookingPageContent::limit($field)];
+            }
+        }
+
+        $data = $request->validate($rules);
+
+        foreach (BookingPageContent::LOCALES as $locale) {
+            SiteSetting::putPairs([
+                'booking_page_'.$locale => json_encode($data[$locale], JSON_UNESCAPED_UNICODE),
+            ]);
+        }
+
+        return response()->json(['content' => BookingPageContent::resolved()]);
     }
 }

@@ -52,4 +52,6 @@ Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
     Route::get('/customers', [StudioAdminController::class, 'customers']);
     Route::get('/settings', [StudioAdminController::class, 'settings']);
     Route::post('/settings', [StudioAdminController::class, 'updateSettings']);
+    Route::get('/booking-page', [StudioAdminController::class, 'bookingPage']);
+    Route::post('/booking-page', [StudioAdminController::class, 'updateBookingPage']);
 });

@@ -9,7 +9,7 @@ const route = useRoute()
 const service = ref(null)
 const failed = ref(false)
 
-const minimum = computed(() => service.value?.minimum_hours || 2)
+const minimum = computed(() => service.value?.minimum_hours || 1)
 const error = computed(() => (failed.value ? t('detail.missing') : ''))
 
 onMounted(async () => {

@@ -9,7 +9,7 @@ const form = reactive({
   address: '',
   open_time: '09:00',
   close_time: '19:00',
-  minimum_hours: 2,
+  minimum_hours: 1,
   studio_minimum_hours: 1,
   currency: 'CAD',
   studio_hourly_rate: 75,
@@ -85,7 +85,7 @@ async function save() {
       </div>
       <div class="col-md-4 d-flex flex-column gap-1">
         <label class="type-label-sm text-uppercase">Minimum hours</label>
-        <input v-model.number="form.minimum_hours" class="form-control" min="2" required type="number">
+        <input v-model.number="form.minimum_hours" class="form-control" min="1" max="12" required type="number">
       </div>
     </div>
     <div class="row g-3">

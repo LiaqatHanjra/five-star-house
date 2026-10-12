@@ -14,7 +14,7 @@ class StudioSchedule
         return [
             'open' => substr((string) SiteSetting::getValue('open_time', '09:00'), 0, 5),
             'close' => substr((string) SiteSetting::getValue('close_time', '19:00'), 0, 5),
-            'minimum_hours' => max(2, (int) SiteSetting::getValue('minimum_hours', '2')),
+            'minimum_hours' => max(1, (int) SiteSetting::getValue('minimum_hours', '1')),
             'currency' => SiteSetting::getValue('currency', 'CAD'),
         ];
     }

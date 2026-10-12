@@ -57,7 +57,7 @@ class Service extends Model
             'charge' => $this->charge,
             'currency' => $this->currency,
             'charge_unit' => $this->charge_unit,
-            'minimum_hours' => $this->minimum_hours ?: 2,
+            'minimum_hours' => $this->minimum_hours ?: 1,
             'image_url' => $this->image_url,
             'tags' => $this->tags ?? [],
             'cta_label' => $this->cta_label,

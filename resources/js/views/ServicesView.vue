@@ -96,7 +96,7 @@ onMounted(async () => {
               <RouterLink :to="`/services/${service.slug}`">{{ service.title }}</RouterLink>
             </h3>
             <p class="type-body-md text-body-secondary">{{ service.description }}</p>
-            <p class="type-label-md text-uppercase text-primary">{{ formatCharge(service) }} · {{ tp('services.hourMinimum', service.minimum_hours || 2) }}</p>
+            <p class="type-label-md text-uppercase text-primary">{{ formatCharge(service) }} · {{ tp('services.hourMinimum', service.minimum_hours || 1) }}</p>
             <div class="d-flex flex-wrap gap-2 pt-1">
               <span v-for="tag in service.tags" :key="tag" class="bg-secondary px-12 py-1 type-label-sm text-uppercase ls-wider">{{ tag }}</span>
             </div>

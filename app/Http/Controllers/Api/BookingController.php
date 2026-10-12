@@ -9,6 +9,7 @@ use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\Service;
 use App\Models\SiteSetting;
+use App\Support\BookingPageContent;
 use App\Support\StudioSchedule;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -36,6 +37,7 @@ class BookingController extends Controller
 
         return response()->json([
             'settings' => array_intersect_key($pairs, array_flip($public)),
+            'content' => BookingPageContent::resolved(),
         ]);
     }
 
@@ -437,7 +439,7 @@ class BookingController extends Controller
     private function rateFor(string $kind, ?int $serviceId): array
     {
         $currency = SiteSetting::getValue('currency', 'CAD');
-        $minimum = max(2, (int) SiteSetting::getValue('minimum_hours', '2'));
+        $minimum = max(1, (int) SiteSetting::getValue('minimum_hours', '1'));
 
         if ($kind === 'service') {
             $service = Service::query()->where('is_active', true)->findOrFail($serviceId);
@@ -445,7 +447,7 @@ class BookingController extends Controller
             return [
                 'hourly_rate' => (float) $service->charge,
                 'currency' => $service->currency ?: $currency,
-                'minimum_hours' => max(2, (int) ($service->minimum_hours ?: $minimum)),
+                'minimum_hours' => max(1, (int) ($service->minimum_hours ?: $minimum)),
                 'label' => $service->title,
             ];
         }

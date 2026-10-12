@@ -19,7 +19,7 @@ export default {
   },
   footer: {
     tagline: 'Film • Photo • Creative production',
-    location: 'Montreal, Canada — © 2026 Five Star House',
+    location: 'MONTREAL, CANADA — © 2027 FIVE STAR HOUSE',
     coords: '45.5017° N, 73.5673° W • Studio ref: 5SH-YUL',
     admin: 'Admin',
   },
