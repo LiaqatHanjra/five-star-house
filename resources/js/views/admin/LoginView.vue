@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '../../api'
+import SiteBrand from '../../components/SiteBrand.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -32,10 +33,7 @@ async function submit() {
 <template>
   <div class="login-wrap">
     <form class="login-card d-flex flex-column gap-3" @submit.prevent="submit">
-      <div class="d-flex align-items-center gap-2">
-        <span class="sq-25 bg-danger d-inline-block"></span>
-        <span class="type-headline-sm text-uppercase ls-wider">FIVE STAR HOUSE</span>
-      </div>
+      <SiteBrand />
       <div>
         <p class="type-overline text-uppercase ls-20 text-danger mb-2">STUDIO DESK</p>
         <h1 class="type-headline-md text-uppercase">ADMIN LOGIN</h1>

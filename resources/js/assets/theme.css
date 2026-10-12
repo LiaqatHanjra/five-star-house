@@ -224,12 +224,25 @@ html { scrollbar-width: none; scroll-padding-top: 5rem; }
   backdrop-filter: blur(24px);
 }
 
-.brand-mark {
+.site-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: .6rem;
+  min-width: 0;
+}
+
+.brand-logo {
+  width: 2.75rem;
+  height: auto;
+  display: block;
+  flex: 0 0 auto;
   transition: transform .3s ease;
 }
 
-.brand-link:hover .brand-mark,
-.brand-link:focus-visible .brand-mark { transform: scale(1.25); }
+.brand-logo-sm { width: 2rem; }
+
+.brand-link:hover .brand-logo,
+.brand-link:focus-visible .brand-logo { transform: scale(1.08); }
 
 .brand-link:hover .brand-name,
 .brand-link:focus-visible .brand-name { color: var(--salmon) !important; }

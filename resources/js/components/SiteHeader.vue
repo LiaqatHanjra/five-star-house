@@ -2,6 +2,7 @@
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { locale, setLocale, t } from '../i18n'
+import SiteBrand from './SiteBrand.vue'
 
 const route = useRoute()
 const header = ref(null)
@@ -63,9 +64,8 @@ watch(locale, async () => {
 <template>
   <header ref="header" class="site-header fixed-top border-bottom">
     <div class="site-wrap header-bar">
-      <RouterLink class="brand-link d-flex align-items-center gap-2" to="/">
-        <span class="brand-mark sq-25 bg-danger d-inline-block" aria-hidden="true"></span>
-        <span class="brand-name type-headline-sm text-uppercase ls-wider">FIVE STAR HOUSE</span>
+      <RouterLink class="brand-link" to="/">
+        <SiteBrand />
       </RouterLink>
       <button
         class="nav-toggle"

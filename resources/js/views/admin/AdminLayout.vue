@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '../../api'
+import SiteBrand from '../../components/SiteBrand.vue'
 
 const router = useRouter()
 const user = computed(() => {
@@ -28,10 +29,7 @@ async function logout() {
   <div class="admin-shell">
     <aside class="admin-side">
       <div>
-        <div class="d-flex align-items-center gap-2 mb-2">
-          <span class="sq-25 bg-danger d-inline-block"></span>
-          <span class="type-label-sm text-uppercase ls-wider">FIVE STAR HOUSE</span>
-        </div>
+        <SiteBrand class="mb-2" compact />
         <p class="type-body-sm text-body-secondary mb-0">{{ user.name || 'Studio Admin' }}</p>
       </div>
       <nav class="admin-nav">

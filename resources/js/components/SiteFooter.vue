@@ -1,5 +1,6 @@
 <script setup>
 import { t } from '../i18n'
+import SiteBrand from './SiteBrand.vue'
 </script>
 
 <template>
@@ -11,10 +12,7 @@ import { t } from '../i18n'
     </div>
     <div class="position-relative z-1 site-wrap py-2xl d-flex flex-column flex-md-row align-items-start align-items-md-end justify-content-between gap-xl">
       <div class="d-flex flex-column gap-2">
-        <div class="d-flex align-items-center gap-2">
-          <span class="sq-3 bg-danger d-inline-block" aria-hidden="true"></span>
-          <span class="type-headline-sm text-uppercase ls-wider">FIVE STAR HOUSE</span>
-        </div>
+        <SiteBrand />
         <p class="type-overline text-uppercase ls-20 text-primary">{{ t('footer.tagline') }}</p>
       </div>
       <div class="d-flex flex-column align-items-md-end gap-1">
