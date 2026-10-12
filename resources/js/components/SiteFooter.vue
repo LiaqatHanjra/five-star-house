@@ -1,3 +1,7 @@
+<script setup>
+import { t } from '../i18n'
+</script>
+
 <template>
   <footer class="w-100 bg-dark border-top position-relative overflow-hidden">
     <div class="position-absolute start-0 end-0 bottom-0 pe-none opacity-15 d-flex align-items-end justify-content-center user-select-none overflow-hidden h-40">
@@ -11,13 +15,13 @@
           <span class="sq-3 bg-danger d-inline-block" aria-hidden="true"></span>
           <span class="type-headline-sm text-uppercase ls-wider">FIVE STAR HOUSE</span>
         </div>
-        <p class="type-overline text-uppercase ls-20 text-primary">FILM • PHOTO • CREATIVE PRODUCTION</p>
+        <p class="type-overline text-uppercase ls-20 text-primary">{{ t('footer.tagline') }}</p>
       </div>
       <div class="d-flex flex-column align-items-md-end gap-1">
-        <p class="type-body-sm text-body-secondary ls-wider text-uppercase">MONTREAL, CANADA — © 2026 FIVE STAR HOUSE</p>
+        <p class="type-body-sm text-body-secondary ls-wider text-uppercase">{{ t('footer.location') }}</p>
         <p class="type-label-sm text-body-tertiary text-uppercase ls-widest">
-          45.5017° N, 73.5673° W • STUDIO REF: 5SH-YUL
-          <RouterLink class="ms-2 hover-primary" to="/admin/login">ADMIN</RouterLink>
+          {{ t('footer.coords') }}
+          <RouterLink class="ms-2 hover-primary" to="/admin/login">{{ t('footer.admin') }}</RouterLink>
         </p>
       </div>
     </div>

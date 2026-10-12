@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { api } from '../api'
 import { formatMoney } from '../format'
+import { t } from '../i18n'
 
 const route = useRoute()
 const booking = ref(null)
@@ -39,24 +40,24 @@ onMounted(async () => {
     <div class="max-w-xl d-flex flex-column gap-3">
       <p v-if="error" class="type-body-md text-danger">{{ error }}</p>
       <template v-if="booking?.payment_status === 'paid'">
-        <p class="type-overline text-uppercase ls-20 text-danger">CONFIRMED</p>
-        <h1 class="type-headline-md text-uppercase">YOU ARE BOOKED</h1>
+        <p class="type-overline text-uppercase ls-20 text-danger">{{ t('success.confirmedKicker') }}</p>
+        <h1 class="type-headline-md text-uppercase">{{ t('success.confirmedTitle') }}</h1>
         <p class="type-body-lg text-body-secondary">
-          {{ booking.reference }} is paid. A confirmation email is on its way to {{ booking.email }} and to the studio owner.
+          {{ t('success.confirmedCopy', { reference: booking.reference, email: booking.email }) }}
         </p>
       </template>
       <template v-else-if="booking">
-        <p class="type-overline text-uppercase ls-20 text-danger">PAYMENT PENDING</p>
-        <h1 class="type-headline-md text-uppercase">YOUR BOOKING IS NOT CONFIRMED</h1>
-        <p class="type-body-lg text-body-secondary">We could not confirm payment for {{ booking.reference }}. Please return to checkout to try again.</p>
-        <RouterLink class="btn btn-danger btn-pad align-self-start" :to="`/pay/${booking.reference}`">Return to payment</RouterLink>
+        <p class="type-overline text-uppercase ls-20 text-danger">{{ t('success.pendingKicker') }}</p>
+        <h1 class="type-headline-md text-uppercase">{{ t('success.pendingTitle') }}</h1>
+        <p class="type-body-lg text-body-secondary">{{ t('success.pendingCopy', { reference: booking.reference }) }}</p>
+        <RouterLink class="btn btn-danger btn-pad align-self-start" :to="`/pay/${booking.reference}`">{{ t('success.returnPay') }}</RouterLink>
       </template>
       <div v-if="booking" class="bg-dark p-4">
         <p class="type-body-md mb-1">{{ booking.project_type }}</p>
-        <p class="type-body-md text-body-secondary mb-1">{{ booking.booking_date }} · {{ booking.start_time }} to {{ booking.end_time }}</p>
+        <p class="type-body-md text-body-secondary mb-1">{{ t('success.timeLine', { date: booking.booking_date, start: booking.start_time, end: booking.end_time }) }}</p>
         <p class="type-headline-sm text-primary mb-0">{{ formatMoney(booking.amount, payment?.currency || 'CAD') }}</p>
       </div>
-      <RouterLink class="btn btn-secondary btn-pad align-self-start" to="/">Back to the studio</RouterLink>
+      <RouterLink class="btn btn-secondary btn-pad align-self-start" to="/">{{ t('success.back') }}</RouterLink>
     </div>
   </section>
 </template>

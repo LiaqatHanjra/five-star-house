@@ -1,11 +1,13 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { api } from '../api'
 import { formatCharge } from '../format'
+import { t, tp } from '../i18n'
 
 const banner = ref(null)
 const services = ref([])
-const error = ref('')
+const failed = ref(false)
+const error = computed(() => (failed.value ? t('services.loadError') : ''))
 
 onMounted(async () => {
   try {
@@ -13,7 +15,7 @@ onMounted(async () => {
     banner.value = data.banner
     services.value = data.services
   } catch (e) {
-    error.value = 'Services could not be loaded.'
+    failed.value = true
   }
 })
 </script>
@@ -26,26 +28,28 @@ onMounted(async () => {
         <div class="col-lg-6 d-flex flex-column gap-3">
           <div class="d-flex align-items-center gap-1">
             <span class="sq-2 bg-danger d-inline-block" aria-hidden="true"></span>
-            <span class="type-overline text-uppercase ls-25 text-danger">OUR SERVICES</span>
+            <span class="type-overline text-uppercase ls-25 text-danger">{{ t('services.kicker') }}</span>
           </div>
           <h1 class="type-headline-mobile type-md-headline-lg text-uppercase lh-1 ls-tight">
-            CREATIVE<br>PRODUCTION<br>SOLUTIONS
+            <template v-for="(line, index) in t('services.titleLines')" :key="line">
+              {{ line }}<br v-if="index < t('services.titleLines').length - 1">
+            </template>
           </h1>
           <p class="type-body-lg text-body-secondary max-w-xl pt-1">
-            From concept to final cut, we handle every step of the process. Whether you need a full production, clean visuals, or an agile creative partner, we bring the right team, industry-grade tools, and seasoned experience to realize your vision.
+            {{ t('services.lead') }}
           </p>
           <div class="d-flex flex-wrap align-items-center gap-3 pt-2">
             <div class="d-flex align-items-center gap-1 text-body-secondary type-label-sm text-uppercase">
               <span class="material-symbols-outlined text-danger icon-16">check_circle</span>
-              <span>Full-Spectrum Production</span>
+              <span>{{ t('services.fullSpectrum') }}</span>
             </div>
             <div class="d-flex align-items-center gap-1 text-body-secondary type-label-sm text-uppercase">
               <span class="material-symbols-outlined text-danger icon-16">check_circle</span>
-              <span>ARRI &amp; RED Ecosystem</span>
+              <span>{{ t('services.cameras') }}</span>
             </div>
             <div class="d-flex align-items-center gap-1 text-body-secondary type-label-sm text-uppercase">
               <span class="material-symbols-outlined text-danger icon-16">check_circle</span>
-              <span>1600 SQ FT Cyclorama</span>
+              <span>{{ t('services.cyc') }}</span>
             </div>
           </div>
         </div>
@@ -54,8 +58,8 @@ onMounted(async () => {
             <div v-if="banner" class="media-cover w-100 h-100" :style="{ backgroundImage: `url('${banner.image_url}')` }"></div>
             <div class="overlay-fade position-absolute top-0 start-0 end-0 bottom-0 opacity-80"></div>
             <div class="position-absolute bottom-0 start-0 end-0 m-3 d-flex align-items-center justify-content-between text-body-secondary type-label-sm">
-              <span class="bg-dark bg-opacity-80 px-2 py-1 text-uppercase ls-widest text-fixed">{{ banner?.category || 'STAGE 01 • LIVE CAPTURE' }}</span>
-              <span class="text-uppercase text-body-tertiary ls-wider d-none d-sm-inline-block">{{ banner?.title || 'MONTREAL, QC' }}</span>
+              <span class="bg-dark bg-opacity-80 px-2 py-1 text-uppercase ls-widest text-fixed">{{ banner?.category || t('services.stageFallback') }}</span>
+              <span class="text-uppercase text-body-tertiary ls-wider d-none d-sm-inline-block">{{ banner?.title || t('services.cityFallback') }}</span>
             </div>
           </div>
         </div>
@@ -67,11 +71,11 @@ onMounted(async () => {
     <div class="site-wrap d-flex flex-column gap-2xl">
       <div class="d-flex flex-column flex-md-row align-items-md-end justify-content-between gap-3 bg-body-secondary bg-opacity-40 p-3">
         <div>
-          <span class="type-overline text-uppercase ls-20 text-danger">CAPABILITIES • SCOPE</span>
-          <h2 class="type-headline-md text-uppercase mt-1">CORE DISCIPLINES</h2>
+          <span class="type-overline text-uppercase ls-20 text-danger">{{ t('services.scope') }}</span>
+          <h2 class="type-headline-md text-uppercase mt-1">{{ t('services.core') }}</h2>
         </div>
         <p class="type-body-sm text-body-secondary max-w-md">
-          Modular, turnkey, or collaborative. We operate as an integrated unit or deploy custom teams geared precisely to campaign parameters.
+          {{ t('services.scopeCopy') }}
         </p>
       </div>
 
@@ -92,13 +96,13 @@ onMounted(async () => {
               <RouterLink :to="`/services/${service.slug}`">{{ service.title }}</RouterLink>
             </h3>
             <p class="type-body-md text-body-secondary">{{ service.description }}</p>
-            <p class="type-label-md text-uppercase text-primary">{{ formatCharge(service) }} · {{ service.minimum_hours || 2 }} HOUR MINIMUM</p>
+            <p class="type-label-md text-uppercase text-primary">{{ formatCharge(service) }} · {{ tp('services.hourMinimum', service.minimum_hours || 2) }}</p>
             <div class="d-flex flex-wrap gap-2 pt-1">
               <span v-for="tag in service.tags" :key="tag" class="bg-secondary px-12 py-1 type-label-sm text-uppercase ls-wider">{{ tag }}</span>
             </div>
             <div class="d-flex align-items-center gap-4 pt-2">
               <RouterLink class="btn btn-danger btn-quote" :to="`/services/${service.slug}`">
-                <span>VIEW SERVICE</span>
+                <span>{{ t('services.viewService') }}</span>
                 <span class="material-symbols-outlined icon-16" aria-hidden="true">arrow_forward</span>
               </RouterLink>
             </div>
@@ -113,24 +117,24 @@ onMounted(async () => {
       <div class="bg-body-secondary p-4">
         <div class="row g-3">
           <div class="col-md-3 d-flex flex-column gap-1">
-            <span class="type-overline text-uppercase ls-widest text-danger">STUDIO FOOTPRINT</span>
-            <span class="type-headline-md type-md-headline-lg fw-bold">1,600<span class="text-danger type-headline-sm">SQ FT</span></span>
-            <span class="type-body-sm text-body-tertiary">Expanded two-wall seamless cyc</span>
+            <span class="type-overline text-uppercase ls-widest text-danger">{{ t('services.footprint') }}</span>
+            <span class="type-headline-md type-md-headline-lg fw-bold">1,600<span class="text-danger type-headline-sm">{{ t('units.sqft') }}</span></span>
+            <span class="type-body-sm text-body-tertiary">{{ t('services.footprintNote') }}</span>
           </div>
           <div class="col-md-3 d-flex flex-column gap-1">
-            <span class="type-overline text-uppercase ls-widest text-danger">POWER CAP</span>
+            <span class="type-overline text-uppercase ls-widest text-danger">{{ t('services.power') }}</span>
             <span class="type-headline-md type-md-headline-lg fw-bold">100<span class="text-danger type-headline-sm">A / 3-PH</span></span>
-            <span class="type-body-sm text-body-tertiary">Isolated sound recording feed</span>
+            <span class="type-body-sm text-body-tertiary">{{ t('services.powerNote') }}</span>
           </div>
           <div class="col-md-3 d-flex flex-column gap-1">
-            <span class="type-overline text-uppercase ls-widest text-danger">CLEAR CEILINGS</span>
-            <span class="type-headline-md type-md-headline-lg fw-bold">14<span class="text-danger type-headline-sm">FT</span></span>
-            <span class="type-body-sm text-body-tertiary">Full speed-rail lighting grid</span>
+            <span class="type-overline text-uppercase ls-widest text-danger">{{ t('services.ceilings') }}</span>
+            <span class="type-headline-md type-md-headline-lg fw-bold">14<span class="text-danger type-headline-sm">{{ t('units.ft') }}</span></span>
+            <span class="type-body-sm text-body-tertiary">{{ t('services.ceilingsNote') }}</span>
           </div>
           <div class="col-md-3 d-flex flex-column gap-1">
-            <span class="type-overline text-uppercase ls-widest text-danger">LOCATION</span>
+            <span class="type-overline text-uppercase ls-widest text-danger">{{ t('services.location') }}</span>
             <span class="type-headline-md type-md-headline-lg fw-bold">YUL<span class="text-danger type-headline-sm">MILE-EX</span></span>
-            <span class="type-body-sm text-body-tertiary">45.5017° N, 73.5673° W</span>
+            <span class="type-body-sm text-body-tertiary">{{ t('services.locationNote') }}</span>
           </div>
         </div>
       </div>
@@ -140,39 +144,39 @@ onMounted(async () => {
   <section class="w-100 py-3xl">
     <div class="site-wrap d-flex flex-column gap-2xl">
       <div class="d-flex flex-column gap-1 max-w-2xl">
-        <span class="type-overline text-uppercase ls-25 text-danger">EXECUTION MODEL</span>
-        <h2 class="type-headline-mobile type-md-headline-lg text-uppercase">THE WORKFLOW</h2>
-        <p class="type-body-md text-body-secondary">Strict methodology refined across commercial shoots, editorial campaigns, and long-form cinema.</p>
+        <span class="type-overline text-uppercase ls-25 text-danger">{{ t('services.model') }}</span>
+        <h2 class="type-headline-mobile type-md-headline-lg text-uppercase">{{ t('services.workflow') }}</h2>
+        <p class="type-body-md text-body-secondary">{{ t('services.workflowCopy') }}</p>
       </div>
       <div class="row g-4">
         <div class="col-md-4">
           <article class="step-card bg-body-secondary p-xl d-flex flex-column justify-content-between gap-xl position-relative overflow-hidden h-100">
             <div class="d-flex flex-column gap-3 position-relative z-1">
               <span class="step-num type-headline-lg fw-bold">01</span>
-              <h3 class="type-headline-sm text-uppercase ls-wider">DISCOVERY &amp; PRE-PRO</h3>
-              <p class="type-body-md text-body-secondary">Creative treatments, moodboard alignment, budget architecture, location scouting, talent casting, and meticulous shot listing with 3D set pre-visualization.</p>
+              <h3 class="type-headline-sm text-uppercase ls-wider">{{ t('services.step1Title') }}</h3>
+              <p class="type-body-md text-body-secondary">{{ t('services.step1Body') }}</p>
             </div>
-            <div class="pt-3 border-top border-faint text-body-tertiary type-label-sm text-uppercase ls-widest">PHASE: 01 // ARCHITECTURE</div>
+            <div class="pt-3 border-top border-faint text-body-tertiary type-label-sm text-uppercase ls-widest">{{ t('services.step1Phase') }}</div>
           </article>
         </div>
         <div class="col-md-4">
           <article class="step-card bg-body-secondary p-xl d-flex flex-column justify-content-between gap-xl position-relative overflow-hidden h-100">
             <div class="d-flex flex-column gap-3 position-relative z-1">
               <span class="step-num type-headline-lg fw-bold">02</span>
-              <h3 class="type-headline-sm text-uppercase ls-wider">PRODUCTION &amp; SHOOT DAY</h3>
-              <p class="type-body-md text-body-secondary">Execution on location or in our Mile-Ex soundstage. High-calibre camera crews, cinema grip trucks, dedicated DIT data verification, and live client monitor feeds.</p>
+              <h3 class="type-headline-sm text-uppercase ls-wider">{{ t('services.step2Title') }}</h3>
+              <p class="type-body-md text-body-secondary">{{ t('services.step2Body') }}</p>
             </div>
-            <div class="pt-3 border-top border-faint text-body-tertiary type-label-sm text-uppercase ls-widest">PHASE: 02 // CAPTURE</div>
+            <div class="pt-3 border-top border-faint text-body-tertiary type-label-sm text-uppercase ls-widest">{{ t('services.step2Phase') }}</div>
           </article>
         </div>
         <div class="col-md-4">
           <article class="step-card bg-body-secondary p-xl d-flex flex-column justify-content-between gap-xl position-relative overflow-hidden h-100">
             <div class="d-flex flex-column gap-3 position-relative z-1">
               <span class="step-num type-headline-lg fw-bold">03</span>
-              <h3 class="type-headline-sm text-uppercase ls-wider">POST &amp; MASTER DELIVERY</h3>
-              <p class="type-body-md text-body-secondary">Offline rough cut, sound design, original scoring, precision DaVinci color grading, VFX compositing, and multi-format master exports geared for theater, broadcast, and social.</p>
+              <h3 class="type-headline-sm text-uppercase ls-wider">{{ t('services.step3Title') }}</h3>
+              <p class="type-body-md text-body-secondary">{{ t('services.step3Body') }}</p>
             </div>
-            <div class="pt-3 border-top border-faint text-body-tertiary type-label-sm text-uppercase ls-widest">PHASE: 03 // MASTERING</div>
+            <div class="pt-3 border-top border-faint text-body-tertiary type-label-sm text-uppercase ls-widest">{{ t('services.step3Phase') }}</div>
           </article>
         </div>
       </div>
@@ -183,12 +187,12 @@ onMounted(async () => {
     <div class="wash-red position-absolute top-0 start-0 end-0 bottom-0"></div>
     <div class="max-w-900 mx-auto px-page text-center d-flex flex-column align-items-center gap-3 position-relative z-1">
       <div class="bar-lg bg-danger"></div>
-      <span class="type-overline text-uppercase ls-25 text-primary">LET'S CREATE SOMETHING GREAT</span>
-      <h2 class="type-headline-mobile type-md-headline-lg text-uppercase ls-tight">READY TO BRING YOUR PROJECT TO LIFE?</h2>
-      <p class="type-body-lg text-body-secondary max-w-xl">Your vision. Our expertise. Let's make it happen. Reach out to discuss dates, equipment packages, or end-to-end studio production.</p>
+      <span class="type-overline text-uppercase ls-25 text-primary">{{ t('services.ctaKicker') }}</span>
+      <h2 class="type-headline-mobile type-md-headline-lg text-uppercase ls-tight">{{ t('services.ctaTitle') }}</h2>
+      <p class="type-body-lg text-body-secondary max-w-xl">{{ t('services.ctaCopy') }}</p>
       <div class="pt-3">
         <RouterLink class="btn btn-danger btn-cta" to="/book">
-          <span>BOOK A PROJECT</span>
+          <span>{{ t('services.bookProject') }}</span>
           <span class="material-symbols-outlined icon-16" aria-hidden="true">arrow_forward</span>
         </RouterLink>
       </div>

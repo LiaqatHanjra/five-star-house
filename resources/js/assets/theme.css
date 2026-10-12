@@ -260,6 +260,50 @@ html { scrollbar-width: none; scroll-padding-top: 5rem; }
 
 .site-nav .nav-link.active { border-bottom-color: var(--red); }
 
+.header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem 1.25rem;
+  min-height: 5rem;
+  padding-top: .75rem;
+  padding-bottom: .75rem;
+}
+
+.public-main { padding-top: var(--header-h, 5rem); }
+
+.lang-switch {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid rgb(255 255 255 / 22%);
+}
+
+.lang-switch button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: var(--display);
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  line-height: 1;
+  padding: .45rem .6rem;
+}
+
+.lang-switch button + button { border-left: 1px solid rgb(255 255 255 / 22%); }
+
+.lang-switch button.active {
+  background: var(--red);
+  color: var(--cream);
+}
+
+.lang-switch button:focus-visible {
+  outline: 2px solid var(--salmon);
+  outline-offset: 2px;
+}
+
 .profile-mark { color: var(--on-salmon); }
 
 .btn {
@@ -463,6 +507,11 @@ textarea.form-control { resize: vertical; }
   .gx-lg-xl { --bs-gutter-x: 2.5rem; }
   .g-lg-xl,
   .gy-lg-xl { --bs-gutter-y: 2.5rem; }
+}
+
+@media (max-width: 767.98px) {
+  .header-bar { flex-wrap: wrap; row-gap: .35rem; }
+  .site-nav { flex: 1 0 100%; }
 }
 
 @media (max-width: 575.98px) {

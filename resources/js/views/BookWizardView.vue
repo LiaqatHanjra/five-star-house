@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '../api'
 import { formatMoney } from '../format'
+import { dateLocale, hourUnit, statusLabel, t, tp } from '../i18n'
 
 const route = useRoute()
 const router = useRouter()
@@ -34,15 +35,12 @@ const kind = computed(() => {
   return 'studio_time'
 })
 
-const title = computed(() => service.value?.title || ({
-  studio_time: 'Book the studio',
-  studio_event: 'Book the studio for an event',
-  owner_event: 'Book the owner for an event',
-}[kind.value]))
+const title = computed(() => service.value?.title || t(`book.titles.${kind.value}`))
 
 const needsEvent = computed(() => kind.value === 'studio_event' || kind.value === 'owner_event')
 const monthKey = computed(() => `${cursor.value.getFullYear()}-${String(cursor.value.getMonth() + 1).padStart(2, '0')}`)
-const monthLabel = computed(() => cursor.value.toLocaleDateString('en-CA', { month: 'long', year: 'numeric' }))
+const monthLabel = computed(() => cursor.value.toLocaleDateString(dateLocale(), { month: 'long', year: 'numeric' }))
+const weekdays = computed(() => t('calendar.weekdays'))
 
 const days = computed(() => {
   const year = cursor.value.getFullYear()
@@ -175,21 +173,21 @@ onMounted(async () => {
 <template>
   <div class="site-wrap py-xl py-lg-3xl d-flex flex-column gap-4">
     <div>
-      <p class="type-overline text-uppercase ls-20 text-danger">MINIMUM {{ service?.minimum_hours || windowInfo.minimum_hours || 2 }} HOURS</p>
+      <p class="type-overline text-uppercase ls-20 text-danger">{{ tp('wizard.minimum', service?.minimum_hours || windowInfo.minimum_hours || 2) }}</p>
       <h1 class="type-headline-md text-uppercase">{{ title }}</h1>
-      <p v-if="quote" class="type-body-md text-primary mb-0">{{ formatMoney(quote.hourly_rate, quote.currency) }} / hour · {{ formatMoney(quote.amount, quote.currency) }} for {{ hours }} hours</p>
+      <p v-if="quote" class="type-body-md text-primary mb-0">{{ tp('wizard.quote', hours, { rate: formatMoney(quote.hourly_rate, quote.currency), total: formatMoney(quote.amount, quote.currency) }) }}</p>
     </div>
 
     <div class="row g-4">
       <div class="col-lg-5">
         <div class="bg-dark p-3 p-md-4 d-flex flex-column gap-3">
           <div class="d-flex justify-content-between align-items-center">
-            <button class="btn btn-secondary btn-quote" type="button" @click="shiftMonth(-1)">Prev</button>
+            <button class="btn btn-secondary btn-quote" type="button" @click="shiftMonth(-1)">{{ t('calendar.prev') }}</button>
             <span class="type-label-md text-uppercase">{{ monthLabel }}</span>
-            <button class="btn btn-secondary btn-quote" type="button" @click="shiftMonth(1)">Next</button>
+            <button class="btn btn-secondary btn-quote" type="button" @click="shiftMonth(1)">{{ t('calendar.next') }}</button>
           </div>
           <div class="cal-head">
-            <span v-for="(name, index) in ['S', 'M', 'T', 'W', 'T', 'F', 'S']" :key="index">{{ name }}</span>
+            <span v-for="(name, index) in weekdays" :key="index">{{ name }}</span>
           </div>
           <div class="cal-grid">
             <span v-for="(day, index) in days" :key="index" class="cal-cell">
@@ -204,18 +202,18 @@ onMounted(async () => {
                 <span v-for="booking in day.bookings" :key="booking.reference" class="cal-tip-item">
                   <strong>{{ booking.name }}</strong>
                   <span>{{ booking.title }}</span>
-                  <span>{{ booking.start }}–{{ booking.end }} · {{ booking.hours }} hours · {{ booking.status }}</span>
+                  <span>{{ t('wizard.bookingLine', { start: booking.start, end: booking.end, n: booking.hours, unit: hourUnit(booking.hours), status: statusLabel(booking.status) }) }}</span>
                 </span>
               </span>
             </span>
           </div>
-          <p class="type-body-sm text-body-tertiary mb-0">Red dates are already booked. Hover a red date to see who booked it.</p>
+          <p class="type-body-sm text-body-tertiary mb-0">{{ t('wizard.bookedHint') }}</p>
         </div>
       </div>
 
       <div class="col-lg-7 d-flex flex-column gap-4">
         <div v-if="selectedDate" class="bg-dark p-3 p-md-4">
-          <h2 class="type-headline-sm text-uppercase mb-3">{{ selectedDate }} · choose a start</h2>
+          <h2 class="type-headline-sm text-uppercase mb-3">{{ t('wizard.chooseStart', { date: selectedDate }) }}</h2>
           <div class="hour-row">
             <span v-for="slot in slots" :key="slot.time" class="hour-wrap">
               <button
@@ -229,50 +227,50 @@ onMounted(async () => {
                 <span v-for="booking in slot.bookings" :key="booking.reference" class="cal-tip-item">
                   <strong>{{ booking.name }}</strong>
                   <span>{{ booking.title }}</span>
-                  <span>{{ booking.start }}–{{ booking.end }} · {{ booking.hours }} hours · {{ booking.status }}</span>
+                  <span>{{ t('wizard.bookingLine', { start: booking.start, end: booking.end, n: booking.hours, unit: hourUnit(booking.hours), status: statusLabel(booking.status) }) }}</span>
                 </span>
               </span>
             </span>
           </div>
-          <p class="type-body-sm text-body-tertiary mt-3 mb-0">Red times are already booked. Hover a red time to see the booking. Studio hours are {{ windowInfo.open }} to {{ windowInfo.close }}.</p>
+          <p class="type-body-sm text-body-tertiary mt-3 mb-0">{{ t('wizard.slotHint', { open: windowInfo.open, close: windowInfo.close }) }}</p>
         </div>
 
         <form v-if="startTime" class="bg-dark p-3 p-md-4 d-flex flex-column gap-3" @submit.prevent="submit">
           <div class="d-flex flex-column gap-1">
-            <label class="type-label-sm text-uppercase">Hours</label>
+            <label class="type-label-sm text-uppercase">{{ t('wizard.hours') }}</label>
             <select v-model.number="hours" class="form-select">
-              <option v-for="choice in hourChoices" :key="choice" :value="choice">{{ choice }} hours</option>
+              <option v-for="choice in hourChoices" :key="choice" :value="choice">{{ tp('wizard.hoursOption', choice) }}</option>
             </select>
           </div>
           <div v-if="needsEvent" class="d-flex flex-column gap-1">
-            <label class="type-label-sm text-uppercase">Event name</label>
+            <label class="type-label-sm text-uppercase">{{ t('wizard.eventName') }}</label>
             <input v-model="form.event_title" class="form-control" required>
           </div>
           <div class="row g-3">
             <div class="col-md-6 d-flex flex-column gap-1">
-              <label class="type-label-sm text-uppercase">Full name</label>
+              <label class="type-label-sm text-uppercase">{{ t('wizard.fullName') }}</label>
               <input v-model="form.full_name" class="form-control" required>
             </div>
             <div class="col-md-6 d-flex flex-column gap-1">
-              <label class="type-label-sm text-uppercase">Email</label>
+              <label class="type-label-sm text-uppercase">{{ t('wizard.email') }}</label>
               <input v-model="form.email" class="form-control" required type="email">
             </div>
             <div class="col-md-6 d-flex flex-column gap-1">
-              <label class="type-label-sm text-uppercase">Phone</label>
+              <label class="type-label-sm text-uppercase">{{ t('wizard.phone') }}</label>
               <input v-model="form.phone" class="form-control">
             </div>
             <div class="col-md-6 d-flex flex-column gap-1">
-              <label class="type-label-sm text-uppercase">Address</label>
+              <label class="type-label-sm text-uppercase">{{ t('wizard.address') }}</label>
               <input v-model="form.address" class="form-control">
             </div>
           </div>
           <div class="d-flex flex-column gap-1">
-            <label class="type-label-sm text-uppercase">Notes</label>
+            <label class="type-label-sm text-uppercase">{{ t('wizard.notes') }}</label>
             <textarea v-model="form.message" class="form-control" rows="4"></textarea>
           </div>
           <p v-if="error" class="type-body-sm text-danger mb-0">{{ error }}</p>
           <button class="btn btn-danger btn-submit" :disabled="sending" type="submit">
-            {{ sending ? 'Saving booking...' : 'Continue to payment' }}
+            {{ sending ? t('wizard.saving') : t('wizard.continue') }}
           </button>
         </form>
       </div>

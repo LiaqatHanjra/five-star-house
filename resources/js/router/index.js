@@ -27,14 +27,14 @@ const router = createRouter({
       path: '/',
       component: PublicLayout,
       children: [
-        { path: '', name: 'home', component: HomeView },
-        { path: 'services', name: 'services', component: ServicesView, meta: { title: 'Services' } },
-        { path: 'services/:slug', name: 'service', component: ServiceDetailView, meta: { title: 'Service' } },
-        { path: 'book', name: 'book', component: BookingView, meta: { title: 'Book' } },
-        { path: 'book/service/:slug', name: 'book-service', component: BookWizardView, meta: { title: 'Book a service' } },
-        { path: 'book/:kind', name: 'book-kind', component: BookWizardView, meta: { title: 'Book' } },
-        { path: 'pay/:reference', name: 'pay', component: PaymentView, meta: { title: 'Payment' } },
-        { path: 'booked/:reference', name: 'booked', component: SuccessView, meta: { title: 'Booking confirmed' } },
+        { path: '', name: 'home', component: HomeView, meta: { titleKey: 'meta.home' } },
+        { path: 'services', name: 'services', component: ServicesView, meta: { titleKey: 'meta.services' } },
+        { path: 'services/:slug', name: 'service', component: ServiceDetailView, meta: { titleKey: 'meta.service' } },
+        { path: 'book', name: 'book', component: BookingView, meta: { titleKey: 'meta.book' } },
+        { path: 'book/service/:slug', name: 'book-service', component: BookWizardView, meta: { titleKey: 'meta.bookService' } },
+        { path: 'book/:kind', name: 'book-kind', component: BookWizardView, meta: { titleKey: 'meta.book' } },
+        { path: 'pay/:reference', name: 'pay', component: PaymentView, meta: { titleKey: 'meta.payment' } },
+        { path: 'booked/:reference', name: 'booked', component: SuccessView, meta: { titleKey: 'meta.confirmed' } },
       ],
     },
     { path: '/admin/login', name: 'login', component: LoginView, meta: { title: 'Admin Login' } },
@@ -64,12 +64,6 @@ router.beforeEach((to) => {
   if (to.path === '/admin/login' && token) {
     return { path: '/admin' }
   }
-})
-
-router.afterEach((to) => {
-  document.title = to.meta.title
-    ? `${to.meta.title} — Five Star House`
-    : 'Five Star House — Creative Production Studio'
 })
 
 export default router

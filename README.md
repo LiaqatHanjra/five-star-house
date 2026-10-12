@@ -25,9 +25,15 @@ Laravel is accessible, powerful, and provides tools required for large, robust a
 
 Set `STRIPE_SECRET` to the secret key from your Stripe account and `STRIPE_WEBHOOK_SECRET` to the signing secret for a webhook endpoint pointing to `/api/stripe/webhook`. Enable the `checkout.session.completed` and `checkout.session.async_payment_succeeded` events. Apply database migrations with `php artisan migrate` before taking payments.
 
+Studio rental pricing is managed in the admin area under **Pricing & settings**. The default is CAD $75 per hour with a one-hour minimum; checkout charges the saved booking total through Stripe.
+
 The checkout return URL is built from `APP_URL`, so set it to the public URL of this site. For local testing, use Stripe test keys and forward webhook events to your local `/api/stripe/webhook` endpoint with the Stripe CLI.
 
 If PHP reports a cURL certificate issuer error on Windows, set `STRIPE_CA_BUNDLE` to the absolute path of a current CA certificate bundle (for example, `C:\path\to\cacert.pem`). Certificate verification remains enabled; do not set this to `false`.
+
+## DigitalOcean Spaces uploads
+
+Uploaded service and site images are stored in the public `uploads` directory of the configured DigitalOcean Space. Set `DO_SPACES_KEY`, `DO_SPACES_SECRET`, `DO_SPACES_REGION`, `DO_SPACES_BUCKET`, and `DO_SPACES_ENDPOINT` in the server environment. Set `DO_SPACES_URL` to the public Space or CDN base URL used to serve those files. The Space must allow public reads for uploaded images.
 
 ## Learning Laravel
 

@@ -6,7 +6,7 @@ import SiteHeader from '../components/SiteHeader.vue'
 <template>
   <div class="min-vh-100 d-flex flex-column">
     <SiteHeader />
-    <main class="w-100 flex-grow-1 pt-20">
+    <main class="w-100 flex-grow-1 public-main">
       <RouterView />
     </main>
     <SiteFooter />
