@@ -10,6 +10,8 @@ export default {
   },
   nav: {
     menu: 'Navigation principale',
+    open: 'Ouvrir le menu',
+    close: 'Fermer le menu',
     home: 'Accueil',
     services: 'Services',
     book: 'Réserver',

@@ -10,6 +10,8 @@ export default {
   },
   nav: {
     menu: 'Main navigation',
+    open: 'Open menu',
+    close: 'Close menu',
     home: 'Home',
     services: 'Services',
     book: 'Book',
