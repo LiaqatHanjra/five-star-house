@@ -1,23 +1,17 @@
 <script setup>
 import { watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { locale, t } from './i18n'
+import { locale } from './i18n'
+import { applyDocumentSeo, pageSeo } from './seo'
 
 const route = useRoute()
 
-watch([() => route.fullPath, locale], () => {
-  document.documentElement.lang = locale.value
-  if (route.meta.titleKey === 'meta.home') {
-    document.title = t('meta.home')
-    return
-  }
-  if (route.meta.titleKey) {
-    document.title = `${t(route.meta.titleKey)} — Five Star House`
-    return
-  }
-  document.title = route.meta.title
-    ? `${route.meta.title} — Five Star House`
-    : t('meta.home')
+watch(() => route.fullPath, () => {
+  pageSeo.value = null
+})
+
+watch([() => route.fullPath, locale, pageSeo], () => {
+  applyDocumentSeo(route)
 }, { immediate: true })
 </script>
 

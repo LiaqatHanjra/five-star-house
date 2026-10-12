@@ -1,9 +1,10 @@
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '../api'
 import { formatMoney } from '../format'
 import { dateLocale, hourUnit, locale, statusLabel, t, tp } from '../i18n'
+import { pageSeo } from '../seo'
 
 const route = useRoute()
 const router = useRouter()
@@ -168,6 +169,19 @@ async function submit() {
 
 watch(hours, refreshQuote)
 watch(monthKey, loadMonth)
+watch([title, service], () => {
+  const name = title.value
+  if (!name || String(name).startsWith('book.titles.')) return
+  pageSeo.value = {
+    title: `${name} — Five Star House`,
+    description: service.value?.summary || '',
+    image: service.value?.image_url || '',
+  }
+}, { immediate: true })
+
+onUnmounted(() => {
+  pageSeo.value = null
+})
 
 onMounted(async () => {
   api('/api/studio').then((data) => {

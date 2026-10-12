@@ -1,9 +1,10 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { api } from '../api'
 import { formatCharge } from '../format'
 import { t, tp } from '../i18n'
+import { pageSeo } from '../seo'
 
 const route = useRoute()
 const service = ref(null)
@@ -11,6 +12,19 @@ const failed = ref(false)
 
 const minimum = computed(() => service.value?.minimum_hours || 1)
 const error = computed(() => (failed.value ? t('detail.missing') : ''))
+
+watch(service, (value) => {
+  if (!value) return
+  pageSeo.value = {
+    title: `${value.title} — Five Star House`,
+    description: value.summary || value.description || '',
+    image: value.image_url || '',
+  }
+})
+
+onUnmounted(() => {
+  pageSeo.value = null
+})
 
 onMounted(async () => {
   try {

@@ -54,6 +54,10 @@ class StudioAdminController extends Controller
             'studio_hourly_rate' => ['required', 'numeric', 'min:0'],
             'event_hourly_rate' => ['required', 'numeric', 'min:0'],
             'owner_hourly_rate' => ['required', 'numeric', 'min:0'],
+            'seo_title_en' => ['nullable', 'string', 'max:70'],
+            'seo_title_fr' => ['nullable', 'string', 'max:70'],
+            'seo_description_en' => ['nullable', 'string', 'max:160'],
+            'seo_description_fr' => ['nullable', 'string', 'max:160'],
         ]);
 
         $data['currency'] = strtoupper($data['currency']);

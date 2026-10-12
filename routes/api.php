@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SeoController;
 use App\Http\Controllers\Admin\GoogleCalendarController;
 use App\Http\Controllers\Api\Admin\AuthController;
 use App\Http\Controllers\Api\Admin\BookingAdminController;
@@ -17,6 +18,7 @@ Route::get('/services', [PublicContentController::class, 'services']);
 Route::get('/services/{slug}', [PublicContentController::class, 'service']);
 Route::get('/booking', [PublicContentController::class, 'booking']);
 Route::get('/studio', [BookingController::class, 'studio']);
+Route::get('/seo', [SeoController::class, 'show']);
 Route::get('/availability', [BookingController::class, 'availability']);
 Route::post('/quotes', [BookingController::class, 'quote']);
 Route::post('/bookings', [BookingController::class, 'store']);

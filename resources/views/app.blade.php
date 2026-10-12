@@ -8,6 +8,35 @@
     <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <title>Five Star House — Creative Production Studio</title>
+    <meta name="description" content="Film, photo, and creative production studio in Montreal. Book the house by the hour for a shoot, a session, or an event.">
+    <link rel="canonical" href="{{ rtrim(config('app.url'), '/') }}/">
+    <meta property="og:site_name" content="Five Star House">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Five Star House — Creative Production Studio">
+    <meta property="og:description" content="Film, photo, and creative production studio in Montreal. Book the house by the hour for a shoot, a session, or an event.">
+    <meta property="og:url" content="{{ rtrim(config('app.url'), '/') }}/">
+    <meta property="og:image" content="{{ rtrim(config('app.url'), '/') }}/apple-touch-icon.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <script type="application/ld+json">
+        {
+            "@@context": "https://schema.org",
+            "@@type": "LocalBusiness",
+            "name": "Five Star House",
+            "description": "Film, photo, and creative production studio in Montreal.",
+            "url": "{{ rtrim(config('app.url'), '/') }}/",
+            "image": "{{ rtrim(config('app.url'), '/') }}/apple-touch-icon.png",
+            "address": {
+                "@@type": "PostalAddress",
+                "addressLocality": "Montreal",
+                "addressCountry": "CA"
+            },
+            "geo": {
+                "@@type": "GeoCoordinates",
+                "latitude": 45.5017,
+                "longitude": -73.5673
+            }
+        }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">

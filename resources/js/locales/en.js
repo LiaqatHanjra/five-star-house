@@ -7,6 +7,15 @@ export default {
     bookService: 'Book a service',
     payment: 'Payment',
     confirmed: 'Booking confirmed',
+    descriptions: {
+      home: 'Film, photo, and creative production studio in Montreal. Book the house by the hour for a shoot, a session, or an event.',
+      services: 'Video, photoshoots, song sessions, and studio hire at Five Star House in Montreal.',
+      service: 'Book this production service at Five Star House in Montreal.',
+      book: 'Reserve the studio, an event, or the owner by the hour. Taken times show on the calendar.',
+      bookService: 'Choose a date and time to book this service at Five Star House.',
+      payment: 'Complete your Five Star House booking payment.',
+      confirmed: 'Your Five Star House booking is confirmed.',
+    },
   },
   nav: {
     menu: 'Main navigation',

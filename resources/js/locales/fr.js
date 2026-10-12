@@ -7,6 +7,15 @@ export default {
     bookService: 'Réserver un service',
     payment: 'Paiement',
     confirmed: 'Réservation confirmée',
+    descriptions: {
+      home: 'Studio de film, de photo et de production créative à Montréal. Réservez la maison à l’heure pour un tournage, une séance ou un événement.',
+      services: 'Vidéo, séances photo, sessions musicales et location du studio chez Five Star House à Montréal.',
+      service: 'Réservez ce service de production chez Five Star House à Montréal.',
+      book: 'Réservez le studio, un événement ou le propriétaire à l’heure. Les heures déjà prises apparaissent sur le calendrier.',
+      bookService: 'Choisissez une date et une heure pour réserver ce service chez Five Star House.',
+      payment: 'Terminez le paiement de votre réservation Five Star House.',
+      confirmed: 'Votre réservation Five Star House est confirmée.',
+    },
   },
   nav: {
     menu: 'Navigation principale',

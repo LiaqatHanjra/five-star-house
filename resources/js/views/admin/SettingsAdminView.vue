@@ -16,6 +16,10 @@ const form = reactive({
   studio_hourly_rate: 75,
   event_hourly_rate: 250,
   owner_hourly_rate: 300,
+  seo_title_en: '',
+  seo_title_fr: '',
+  seo_description_en: '',
+  seo_description_fr: '',
 })
 const message = ref('')
 const error = ref('')
@@ -120,6 +124,26 @@ async function save() {
     <p class="type-body-sm text-body-secondary mb-0">
       Studio rental bookings are paid through Stripe checkout. Configure the Stripe secret and webhook keys in the server environment to accept online payments.
     </p>
+    <div class="d-flex flex-column gap-1 mt-2">
+      <h2 class="type-headline-sm text-uppercase mb-0">Search engines</h2>
+      <p class="type-body-sm text-body-secondary mb-0">The title and description Google shows for the home page. Leave a field empty to use the built-in text.</p>
+    </div>
+    <label class="d-flex flex-column gap-1">
+      <span class="type-label-sm text-uppercase">Home title, English</span>
+      <input v-model="form.seo_title_en" class="form-control" maxlength="70">
+    </label>
+    <label class="d-flex flex-column gap-1">
+      <span class="type-label-sm text-uppercase">Home description, English</span>
+      <textarea v-model="form.seo_description_en" class="form-control" maxlength="160" rows="3"></textarea>
+    </label>
+    <label class="d-flex flex-column gap-1">
+      <span class="type-label-sm text-uppercase">Home title, French</span>
+      <input v-model="form.seo_title_fr" class="form-control" maxlength="70">
+    </label>
+    <label class="d-flex flex-column gap-1">
+      <span class="type-label-sm text-uppercase">Home description, French</span>
+      <textarea v-model="form.seo_description_fr" class="form-control" maxlength="160" rows="3"></textarea>
+    </label>
     <button class="btn btn-danger btn-quote align-self-start" :disabled="saving" type="submit">{{ saving ? 'Saving...' : 'Save settings' }}</button>
   </form>
 </template>
