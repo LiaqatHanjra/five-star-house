@@ -5,6 +5,7 @@ namespace App\Mail;
 use App\Models\Booking;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -23,7 +24,12 @@ class BookingConfirmed extends Mailable
             ? 'New booking '.$this->booking->reference
             : 'Your Five Star House booking is confirmed';
 
-        return new Envelope(subject: $subject);
+        return new Envelope(
+            subject: $subject,
+            replyTo: [
+                new Address(config('mail.from.address', 'info@fivestarh.com'), config('mail.from.name', 'Five Star House')),
+            ],
+        );
     }
 
     public function content(): Content

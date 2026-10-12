@@ -43,6 +43,7 @@ class StudioAdminController extends Controller
         $data = $request->validate([
             'owner_name' => ['required', 'string', 'max:120'],
             'owner_email' => ['required', 'email', 'max:180'],
+            'owner_email_secondary' => ['nullable', 'email', 'max:180'],
             'phone' => ['nullable', 'string', 'max:40'],
             'address' => ['nullable', 'string', 'max:180'],
             'open_time' => ['required', 'date_format:H:i'],

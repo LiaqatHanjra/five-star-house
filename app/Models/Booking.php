@@ -28,6 +28,7 @@ class Booking extends Model
         'budget',
         'message',
         'status',
+        'google_event_id',
     ];
 
     protected function casts(): array

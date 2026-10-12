@@ -38,6 +38,7 @@ async function logout() {
         <RouterLink to="/admin/services">Services</RouterLink>
         <RouterLink to="/admin/booking-page">Booking page</RouterLink>
         <RouterLink to="/admin/bookings">Bookings</RouterLink>
+        <RouterLink to="/admin/calendar">Calendar</RouterLink>
         <RouterLink to="/admin/payments">Payments</RouterLink>
         <RouterLink to="/admin/customers">Customers</RouterLink>
         <RouterLink to="/admin/settings">Pricing &amp; settings</RouterLink>

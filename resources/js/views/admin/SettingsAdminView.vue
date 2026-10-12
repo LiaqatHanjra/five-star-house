@@ -4,7 +4,8 @@ import { api } from '../../api'
 
 const form = reactive({
   owner_name: '',
-  owner_email: '',
+  owner_email: 'studiofivestarmtl@gmail.com',
+  owner_email_secondary: 'vladimirphilogene@gmail.com',
   phone: '',
   address: '',
   open_time: '09:00',
@@ -63,8 +64,12 @@ async function save() {
       <input v-model="form.owner_name" class="form-control" required>
     </label>
     <label class="d-flex flex-column gap-1">
-      <span class="type-label-sm text-uppercase">Owner email</span>
+      <span class="type-label-sm text-uppercase">Main email</span>
       <input v-model="form.owner_email" class="form-control" required type="email">
+    </label>
+    <label class="d-flex flex-column gap-1">
+      <span class="type-label-sm text-uppercase">Secondary email</span>
+      <input v-model="form.owner_email_secondary" class="form-control" type="email">
     </label>
     <label class="d-flex flex-column gap-1">
       <span class="type-label-sm text-uppercase">Phone</span>

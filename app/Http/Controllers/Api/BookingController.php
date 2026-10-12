@@ -9,6 +9,7 @@ use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\Service;
 use App\Models\SiteSetting;
+use App\Services\GoogleCalendar;
 use App\Support\BookingPageContent;
 use App\Support\StudioSchedule;
 use Carbon\Carbon;
@@ -22,7 +23,7 @@ use RuntimeException;
 
 class BookingController extends Controller
 {
-    public function __construct(private StudioSchedule $schedule)
+    public function __construct(private StudioSchedule $schedule, private GoogleCalendar $google)
     {
     }
 
@@ -176,6 +177,7 @@ class BookingController extends Controller
         ]);
 
         $booking->load('payment');
+        $this->google->push($booking);
 
         return response()->json([
             'booking' => $booking->toPublicArray(),
@@ -419,6 +421,7 @@ class BookingController extends Controller
             'paid_at' => now(),
         ]);
         $booking->update(['status' => 'confirmed']);
+        $this->google->push($booking->fresh());
 
         try {
             $this->notify($booking->fresh(['payment', 'service']));
@@ -429,10 +432,15 @@ class BookingController extends Controller
 
     private function notify(Booking $booking): void
     {
-        $owner = SiteSetting::getValue('owner_email', 'admin@fivestarhouse.com');
         Mail::to($booking->email)->send(new BookingConfirmed($booking, 'customer'));
-        if ($owner) {
-            Mail::to($owner)->send(new BookingConfirmed($booking, 'owner'));
+
+        $owners = array_values(array_unique(array_filter([
+            SiteSetting::getValue('owner_email', 'studiofivestarmtl@gmail.com'),
+            SiteSetting::getValue('owner_email_secondary', 'vladimirphilogene@gmail.com'),
+        ])));
+
+        if ($owners !== []) {
+            Mail::to($owners)->send(new BookingConfirmed($booking, 'owner'));
         }
     }
 

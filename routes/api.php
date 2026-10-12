@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\GoogleCalendarController;
 use App\Http\Controllers\Api\Admin\AuthController;
 use App\Http\Controllers\Api\Admin\BookingAdminController;
 use App\Http\Controllers\Api\Admin\DashboardController;
@@ -54,4 +55,9 @@ Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
     Route::post('/settings', [StudioAdminController::class, 'updateSettings']);
     Route::get('/booking-page', [StudioAdminController::class, 'bookingPage']);
     Route::post('/booking-page', [StudioAdminController::class, 'updateBookingPage']);
+
+    Route::get('/calendar', [GoogleCalendarController::class, 'show']);
+    Route::post('/calendar/connect', [GoogleCalendarController::class, 'connect']);
+    Route::post('/calendar/sync', [GoogleCalendarController::class, 'sync']);
+    Route::delete('/calendar', [GoogleCalendarController::class, 'disconnect']);
 });

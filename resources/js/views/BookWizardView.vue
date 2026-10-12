@@ -48,6 +48,7 @@ const title = computed(() => {
 })
 
 const needsEvent = computed(() => kind.value === 'studio_event' || kind.value === 'owner_event')
+const backTo = computed(() => (route.params.slug ? `/services/${route.params.slug}` : '/book'))
 const monthKey = computed(() => `${cursor.value.getFullYear()}-${String(cursor.value.getMonth() + 1).padStart(2, '0')}`)
 const monthLabel = computed(() => cursor.value.toLocaleDateString(dateLocale(), { month: 'long', year: 'numeric' }))
 const weekdays = computed(() => t('calendar.weekdays'))
@@ -185,10 +186,13 @@ onMounted(async () => {
 
 <template>
   <div class="site-wrap py-xl py-lg-3xl d-flex flex-column gap-4">
-    <div>
-      <p class="type-overline text-uppercase ls-20 text-danger">{{ tp('wizard.minimum', service?.minimum_hours || windowInfo.minimum_hours || 1) }}</p>
-      <h1 class="type-headline-md text-uppercase">{{ title }}</h1>
-      <p v-if="quote" class="type-body-md text-primary mb-0">{{ tp('wizard.quote', hours, { rate: formatMoney(quote.hourly_rate, quote.currency), total: formatMoney(quote.amount, quote.currency) }) }}</p>
+    <div class="d-flex flex-column align-items-start gap-3">
+      <RouterLink class="btn btn-secondary btn-quote" :to="backTo">{{ t('wizard.back') }}</RouterLink>
+      <div>
+        <p class="type-overline text-uppercase ls-20 text-danger">{{ tp('wizard.minimum', service?.minimum_hours || windowInfo.minimum_hours || 1) }}</p>
+        <h1 class="type-headline-md text-uppercase">{{ title }}</h1>
+        <p v-if="quote" class="type-body-md text-primary mb-0">{{ tp('wizard.quote', hours, { rate: formatMoney(quote.hourly_rate, quote.currency), total: formatMoney(quote.amount, quote.currency) }) }}</p>
+      </div>
     </div>
 
     <div class="row g-4">
@@ -213,9 +217,15 @@ onMounted(async () => {
               >{{ day.label }}</button>
               <span v-if="day.bookings?.length" class="cal-tip">
                 <span v-for="booking in day.bookings" :key="booking.reference" class="cal-tip-item">
-                  <strong>{{ booking.name }}</strong>
-                  <span>{{ booking.title }}</span>
-                  <span>{{ t('wizard.bookingLine', { start: booking.start, end: booking.end, n: booking.hours, unit: hourUnit(booking.hours), status: statusLabel(booking.status) }) }}</span>
+                  <template v-if="booking.status === 'busy'">
+                    <strong>{{ t('wizard.unavailableName') }}</strong>
+                    <span>{{ t('wizard.unavailable') }}</span>
+                  </template>
+                  <template v-else>
+                    <strong>{{ booking.name }}</strong>
+                    <span>{{ booking.title }}</span>
+                    <span>{{ t('wizard.bookingLine', { start: booking.start, end: booking.end, n: booking.hours, unit: hourUnit(booking.hours), status: statusLabel(booking.status) }) }}</span>
+                  </template>
                 </span>
               </span>
             </span>
@@ -238,9 +248,15 @@ onMounted(async () => {
               >{{ slot.time }}</button>
               <span v-if="slot.bookings?.length" class="cal-tip">
                 <span v-for="booking in slot.bookings" :key="booking.reference" class="cal-tip-item">
-                  <strong>{{ booking.name }}</strong>
-                  <span>{{ booking.title }}</span>
-                  <span>{{ t('wizard.bookingLine', { start: booking.start, end: booking.end, n: booking.hours, unit: hourUnit(booking.hours), status: statusLabel(booking.status) }) }}</span>
+                  <template v-if="booking.status === 'busy'">
+                    <strong>{{ t('wizard.unavailableName') }}</strong>
+                    <span>{{ t('wizard.unavailable') }}</span>
+                  </template>
+                  <template v-else>
+                    <strong>{{ booking.name }}</strong>
+                    <span>{{ booking.title }}</span>
+                    <span>{{ t('wizard.bookingLine', { start: booking.start, end: booking.end, n: booking.hours, unit: hourUnit(booking.hours), status: statusLabel(booking.status) }) }}</span>
+                  </template>
                 </span>
               </span>
             </span>

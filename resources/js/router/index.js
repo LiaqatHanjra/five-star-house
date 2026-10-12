@@ -17,6 +17,7 @@ import PaymentsAdminView from '../views/admin/PaymentsAdminView.vue'
 import CustomersAdminView from '../views/admin/CustomersAdminView.vue'
 import SettingsAdminView from '../views/admin/SettingsAdminView.vue'
 import BookingPageAdminView from '../views/admin/BookingPageAdminView.vue'
+import GoogleCalendarView from '../views/admin/GoogleCalendarView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -50,6 +51,7 @@ const router = createRouter({
         { path: 'booking-page', name: 'booking-page', component: BookingPageAdminView, meta: { auth: true, title: 'Booking page' } },
         { path: 'booking-images', name: 'booking-images', component: SiteImagesView, meta: { auth: true, page: 'booking', title: 'Booking Images' } },
         { path: 'bookings', name: 'admin-bookings', component: BookingsAdminView, meta: { auth: true, title: 'Bookings' } },
+        { path: 'calendar', name: 'admin-calendar', component: GoogleCalendarView, meta: { auth: true, title: 'Google Calendar' } },
         { path: 'payments', name: 'admin-payments', component: PaymentsAdminView, meta: { auth: true, title: 'Payments' } },
         { path: 'customers', name: 'admin-customers', component: CustomersAdminView, meta: { auth: true, title: 'Customers' } },
         { path: 'settings', name: 'admin-settings', component: SettingsAdminView, meta: { auth: true, title: 'Site settings' } },

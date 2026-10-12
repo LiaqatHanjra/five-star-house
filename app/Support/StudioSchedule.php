@@ -4,11 +4,16 @@ namespace App\Support;
 
 use App\Models\Booking;
 use App\Models\SiteSetting;
+use App\Services\GoogleCalendar;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 class StudioSchedule
 {
+    public function __construct(private GoogleCalendar $google)
+    {
+    }
+
     public function window(): array
     {
         return [
@@ -45,21 +50,34 @@ class StudioSchedule
 
     public function bookedStarts(string $date): array
     {
-        return $this->hoursCovered($this->blockingBookings($date), $date);
+        return array_values(array_unique(array_merge(
+            $this->hoursCovered($this->blockingBookings($date), $date),
+            $this->google->busyHours($date),
+        )));
     }
 
     public function daySlots(string $date, ?int $minimumHours = null): array
     {
         $bookings = $this->blockingBookings($date);
-        $booked = $this->hoursCovered($bookings, $date);
+        $booked = $this->bookedStarts($date);
+        $ranges = $this->google->rangesOn($date);
         $minimum = $minimumHours ?? $this->window()['minimum_hours'];
 
-        return array_map(function (string $time) use ($date, $booked, $minimum, $bookings) {
+        return array_map(function (string $time) use ($date, $booked, $minimum, $bookings, $ranges) {
             $covering = $bookings
                 ->filter(fn (Booking $booking) => $this->coversHour($booking, $date, $time))
                 ->map(fn (Booking $booking) => $this->calendarSummary($booking))
                 ->values()
                 ->all();
+
+            if ($covering === []) {
+                foreach ($ranges as $range) {
+                    if ($time >= $range['start'] && $time < $range['end']) {
+                        $covering[] = $this->busyMark($date, $range);
+                        break;
+                    }
+                }
+            }
 
             return [
                 'time' => $time,
@@ -75,7 +93,7 @@ class StudioSchedule
         $start = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
         $end = $start->copy()->endOfMonth();
 
-        return Booking::query()
+        $marks = Booking::query()
             ->whereBetween('booking_date', [$start->toDateString(), $end->toDateString()])
             ->where('status', '!=', 'cancelled')
             ->whereNotNull('start_time')
@@ -84,6 +102,41 @@ class StudioSchedule
             ->groupBy(fn (Booking $booking) => $booking->booking_date->toDateString())
             ->map(fn (Collection $rows) => $rows->map(fn (Booking $booking) => $this->calendarSummary($booking))->values()->all())
             ->all();
+
+        foreach ($this->google->rangesForMonth($month) as $date => $ranges) {
+            foreach ($ranges as $range) {
+                if ($this->coveredByLocal($marks[$date] ?? [], $range)) {
+                    continue;
+                }
+                $marks[$date][] = $this->busyMark($date, $range);
+            }
+        }
+
+        return $marks;
+    }
+
+    private function coveredByLocal(array $marks, array $range): bool
+    {
+        foreach ($marks as $mark) {
+            if (($mark['start'] ?? '') < $range['end'] && ($mark['end'] ?? '') > $range['start']) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function busyMark(string $date, array $range): array
+    {
+        return [
+            'reference' => 'google-'.$date.'-'.$range['start'],
+            'name' => 'Unavailable',
+            'title' => 'Unavailable',
+            'start' => $range['start'],
+            'end' => $range['end'],
+            'hours' => (int) $range['hours'],
+            'status' => 'busy',
+        ];
     }
 
     public function isAvailable(string $date, string $start, int $hours, ?int $minimumHours = null): bool
