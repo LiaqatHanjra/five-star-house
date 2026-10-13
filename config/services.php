@@ -32,6 +32,7 @@ return [
     ],
 
     'stripe' => [
+        'public' => env('STRIPE_API'),
         'secret' => env('STRIPE_SECRET'),
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
         'ca_bundle' => env('STRIPE_CA_BUNDLE'),

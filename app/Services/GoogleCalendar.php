@@ -437,7 +437,7 @@ class GoogleCalendar
     private function http(): PendingRequest
     {
         return Http::withOptions([
-            'verify' => config('services.stripe.ca_bundle') ?: true,
+            'verify' => true,
         ])->acceptJson()->timeout(20);
     }
 }

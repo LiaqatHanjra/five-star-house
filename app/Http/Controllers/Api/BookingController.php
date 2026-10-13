@@ -245,7 +245,7 @@ class BookingController extends Controller
 
         if ($payment->stripe_session_id) {
             try {
-                $existing = Http::withOptions(['verify' => config('services.stripe.ca_bundle') ?: true])
+                $existing = Http::withOptions(['verify' => true])
                     ->withBasicAuth($secret, '')
                     ->get('https://api.stripe.com/v1/checkout/sessions/'.$payment->stripe_session_id);
             } catch (ConnectionException $exception) {
@@ -285,7 +285,7 @@ class BookingController extends Controller
 
         $baseUrl = rtrim(config('app.url'), '/');
         try {
-            $response = Http::withOptions(['verify' => config('services.stripe.ca_bundle') ?: true])
+            $response = Http::withOptions(['verify' => true])
                 ->withBasicAuth($secret, '')
                 ->asForm()
                 ->post('https://api.stripe.com/v1/checkout/sessions', [
