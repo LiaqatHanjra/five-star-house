@@ -10,6 +10,7 @@ use App\Models\Payment;
 use App\Models\Service;
 use App\Models\SiteSetting;
 use App\Services\GoogleCalendar;
+use App\Services\PayPal;
 use App\Support\BookingPageContent;
 use App\Support\StudioSchedule;
 use Carbon\Carbon;
@@ -23,8 +24,11 @@ use RuntimeException;
 
 class BookingController extends Controller
 {
-    public function __construct(private StudioSchedule $schedule, private GoogleCalendar $google)
-    {
+    public function __construct(
+        private StudioSchedule $schedule,
+        private GoogleCalendar $google,
+        private PayPal $paypal,
+    ) {
     }
 
     public function studio()
@@ -211,8 +215,11 @@ class BookingController extends Controller
         ]);
     }
 
-    public function pay(string $reference)
+    public function pay(Request $request, string $reference)
     {
+        $data = $request->validate([
+            'method' => ['required', Rule::in(['stripe', 'paypal'])],
+        ]);
         $booking = Booking::query()->with(['payment', 'service'])->where('reference', $reference)->firstOrFail();
         $payment = $booking->payment;
 
@@ -225,6 +232,10 @@ class BookingController extends Controller
                 'message' => 'Payment has already been received.',
                 'paid' => true,
             ]);
+        }
+
+        if ($data['method'] === 'paypal') {
+            return $this->startPaypal($booking, $payment);
         }
 
         $secret = config('services.stripe.secret');
@@ -315,8 +326,14 @@ class BookingController extends Controller
     public function verifyPayment(Request $request, string $reference)
     {
         $data = $request->validate([
-            'session_id' => ['required', 'string', 'max:255'],
+            'session_id' => ['required_without:paypal_order', 'nullable', 'string', 'max:255'],
+            'paypal_order' => ['required_without:session_id', 'nullable', 'string', 'max:255'],
         ]);
+
+        if (! empty($data['paypal_order'])) {
+            return $this->verifyPaypal($data['paypal_order'], $reference);
+        }
+
         $booking = Booking::query()->with(['payment', 'service'])->where('reference', $reference)->firstOrFail();
         $payment = $booking->payment;
 
@@ -425,7 +442,99 @@ class BookingController extends Controller
             && (int) ($session['amount_total'] ?? 0) === (int) round((float) $payment->amount * 100);
     }
 
-    private function markPaymentPaid(Payment $payment, Booking $booking): void
+    private function startPaypal(Booking $booking, Payment $payment)
+    {
+        if (! $this->paypal->configured()) {
+            return response()->json(['message' => 'PayPal is not configured. Please contact the studio.'], 503);
+        }
+
+        try {
+            if ($payment->paypal_order_id) {
+                $existing = $this->paypal->order($payment->paypal_order_id);
+                if ($this->paypal->isPaid($existing, $payment)) {
+                    $this->markPaymentPaid($payment, $booking, 'paypal');
+
+                    return response()->json([
+                        'message' => 'Payment has already been received.',
+                        'paid' => true,
+                    ]);
+                }
+
+                if (($existing['status'] ?? null) === 'APPROVED') {
+                    $captured = $this->paypal->capture($payment->paypal_order_id);
+                    if ($this->paypal->isPaid($captured, $payment)) {
+                        $this->markPaymentPaid($payment, $booking, 'paypal');
+
+                        return response()->json([
+                            'message' => 'Payment has already been received.',
+                            'paid' => true,
+                        ]);
+                    }
+                }
+
+                $url = $this->paypal->approveUrl($existing);
+                if ($url && in_array($existing['status'] ?? null, ['CREATED', 'PAYER_ACTION_REQUIRED', 'SAVED'], true)) {
+                    return response()->json(['checkout_url' => $url]);
+                }
+            }
+
+            $created = $this->paypal->createOrder($payment, $booking);
+            $payment->update(['paypal_order_id' => $created['id']]);
+        } catch (ConnectionException $exception) {
+            report($exception);
+
+            return response()->json(['message' => 'Unable to connect to PayPal. Please try again.'], 502);
+        } catch (RuntimeException $exception) {
+            report($exception);
+
+            return response()->json(['message' => 'Unable to start PayPal checkout. Please try again.'], 502);
+        }
+
+        return response()->json([
+            'checkout_url' => $created['url'],
+        ]);
+    }
+
+    private function verifyPaypal(string $orderId, string $reference)
+    {
+        $booking = Booking::query()->with(['payment', 'service'])->where('reference', $reference)->firstOrFail();
+        $payment = $booking->payment;
+
+        if (! $payment || ! hash_equals((string) $payment->paypal_order_id, $orderId)) {
+            return response()->json(['message' => 'This PayPal order does not match the booking.'], 403);
+        }
+
+        if ($payment->status !== 'paid') {
+            if (! $this->paypal->configured()) {
+                return response()->json(['message' => 'PayPal is not configured. Please contact the studio.'], 503);
+            }
+
+            try {
+                $order = $this->paypal->capture($orderId);
+            } catch (ConnectionException $exception) {
+                report($exception);
+
+                return response()->json(['message' => 'Unable to connect to PayPal. Please try again.'], 502);
+            } catch (RuntimeException $exception) {
+                report($exception);
+
+                return response()->json(['message' => 'Unable to verify payment with PayPal. Please try again.'], 502);
+            }
+
+            if ($this->paypal->isPaid($order, $payment)) {
+                $this->markPaymentPaid($payment, $booking, 'paypal');
+            }
+        }
+
+        $booking->load(['payment', 'service']);
+
+        return response()->json([
+            'booking' => $booking->toPublicArray(),
+            'payment' => $booking->payment?->toPublicArray(),
+        ]);
+    }
+
+    private function markPaymentPaid(Payment $payment, Booking $booking, string $method = 'stripe'): void
     {
         if ($payment->status === 'paid') {
             return;
@@ -433,7 +542,7 @@ class BookingController extends Controller
 
         $payment->update([
             'status' => 'paid',
-            'method' => 'stripe',
+            'method' => $method,
             'paid_at' => now(),
         ]);
         $booking->update(['status' => 'confirmed']);

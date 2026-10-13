@@ -19,6 +19,13 @@ onMounted(async () => {
       return
     }
 
+    if (route.query.token) {
+      const data = await api(`/api/bookings/${route.params.reference}/payment/verify?paypal_order=${encodeURIComponent(route.query.token)}`)
+      booking.value = data.booking
+      payment.value = data.payment
+      return
+    }
+
     const data = await api(`/api/bookings/${route.params.reference}`)
     booking.value = data.booking
     payment.value = data.payment

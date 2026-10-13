@@ -122,7 +122,7 @@ async function save() {
       </div>
     </div>
     <p class="type-body-sm text-body-secondary mb-0">
-      Studio rental bookings are paid through Stripe checkout. Configure the Stripe secret and webhook keys in the server environment to accept online payments.
+      Customers choose Stripe or PayPal at checkout. Add the Stripe and PayPal keys in the server environment to accept online payments.
     </p>
     <div class="d-flex flex-column gap-1 mt-2">
       <h2 class="type-headline-sm text-uppercase mb-0">Search engines</h2>

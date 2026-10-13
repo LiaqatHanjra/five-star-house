@@ -11,6 +11,7 @@ class Payment extends Model
         'booking_id',
         'reference',
         'stripe_session_id',
+        'paypal_order_id',
         'amount',
         'currency',
         'status',
