@@ -153,6 +153,15 @@ html { scrollbar-width: none; scroll-padding-top: 5rem; }
   padding-left: 1.25rem;
 }
 
+.site-bleed {
+  width: 100%;
+  max-width: none;
+  margin-right: 0;
+  margin-left: 0;
+  padding-right: 1.25rem;
+  padding-left: 1.25rem;
+}
+
 .px-page { padding-right: 1.25rem !important; padding-left: 1.25rem !important; }
 .px-12 { padding-right: .75rem !important; padding-left: .75rem !important; }
 .py-12 { padding-top: .75rem !important; padding-bottom: .75rem !important; }
@@ -525,7 +534,8 @@ textarea.form-control { resize: vertical; }
 .animate-pulse { animation: pulse 2s cubic-bezier(.4, 0, .6, 1) infinite; }
 
 @media (min-width: 768px) {
-  .site-wrap { padding-right: 2.5rem; padding-left: 2.5rem; }
+  .site-wrap,
+  .site-bleed { padding-right: 2.5rem; padding-left: 2.5rem; }
   .aspect-md-auto { aspect-ratio: auto; }
   .aspect-md-16x10 { aspect-ratio: 16 / 10; }
   .p-md-xl { padding: 2.5rem !important; }
@@ -534,6 +544,7 @@ textarea.form-control { resize: vertical; }
 
 @media (min-width: 992px) {
   .site-wrap { padding-right: 4rem; padding-left: 4rem; }
+  .site-bleed { padding-right: 2.5rem; padding-left: 2.5rem; }
   .site-nav { gap: 2.5rem; }
   .py-lg-3xl { padding-top: 6rem !important; padding-bottom: 6rem !important; }
   .g-lg-xl,

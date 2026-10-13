@@ -63,7 +63,7 @@ watch(locale, async () => {
 
 <template>
   <header ref="header" class="site-header fixed-top border-bottom">
-    <div class="site-wrap header-bar">
+    <div class="site-bleed header-bar">
       <RouterLink class="brand-link" to="/">
         <SiteBrand />
       </RouterLink>
