@@ -2,16 +2,26 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { api } from '../api'
-import { formatCharge } from '../format'
+import { formatMoney } from '../format'
 import { t, tp } from '../i18n'
 import { pageSeo } from '../seo'
+import BookWizardView from './BookWizardView.vue'
 
 const route = useRoute()
 const service = ref(null)
 const failed = ref(false)
+const billingUnit = ref('')
 
 const minimum = computed(() => service.value?.minimum_hours || 1)
 const error = computed(() => (failed.value ? t('detail.missing') : ''))
+const priceLabel = computed(() => {
+  if (!service.value) return ''
+  const money = formatMoney(service.value.charge, service.value.currency)
+  if (billingUnit.value === 'hour') return `${money}${t('units.perHour')}`
+  if (billingUnit.value === 'day') return `${money}${t('units.perDay')}`
+  if (billingUnit.value === 'project') return `${money}${t('units.perProject')}`
+  return formatMoney(service.value.charge, service.value.currency)
+})
 
 watch(service, (value) => {
   if (!value) return
@@ -51,17 +61,23 @@ onMounted(async () => {
         </div>
         <h1 class="type-headline-md type-md-headline-lg text-uppercase">{{ service.title }}</h1>
         <p class="type-body-lg text-body-secondary">{{ service.description }}</p>
-        <p class="type-headline-sm text-uppercase text-primary">{{ formatCharge(service) }}</p>
-        <p class="type-body-md text-body-secondary mb-0">{{ tp('detail.minimum', minimum) }}</p>
+        <p class="type-headline-sm text-uppercase text-primary">{{ priceLabel }}</p>
+        <p v-if="!billingUnit || billingUnit === 'hour'" class="type-body-md text-body-secondary mb-0">{{ tp('detail.minimum', minimum) }}</p>
         <div class="d-flex flex-wrap gap-2">
           <span v-for="tag in service.tags" :key="tag" class="bg-secondary px-12 py-1 type-label-sm text-uppercase ls-wider">{{ tag }}</span>
         </div>
-        <RouterLink class="btn btn-danger btn-pad align-self-start" :to="`/book/service/${service.slug}`">
-          <span>{{ t('detail.book') }}</span>
-          <span class="material-symbols-outlined icon-18">arrow_forward</span>
-        </RouterLink>
+        <label class="d-flex flex-column gap-1 align-self-start">
+          <span class="type-label-sm text-uppercase">{{ t('detail.rate') }}</span>
+          <select v-model="billingUnit" class="form-select">
+            <option value="">{{ t('detail.chooseRate') }}</option>
+            <option value="hour">{{ t('detail.perHour') }}</option>
+            <option value="project">{{ t('detail.perProject') }}</option>
+            <option value="day">{{ t('detail.perDay') }}</option>
+          </select>
+        </label>
       </div>
     </div>
+    <BookWizardView v-if="billingUnit" :billing-unit="billingUnit" embedded />
   </section>
   <section v-else class="site-wrap py-3xl">
     <p class="type-body-md text-danger">{{ error || t('detail.loading') }}</p>

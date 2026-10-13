@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Service;
 use App\Models\SiteImage;
+use App\Support\ServicesPageContent;
 
 class PublicContentController extends Controller
 {
@@ -33,6 +34,7 @@ class PublicContentController extends Controller
 
         return response()->json([
             'banner' => $banner?->toPublicArray(),
+            'page' => ServicesPageContent::resolved(),
             'services' => $this->activeServices(),
         ]);
     }

@@ -37,6 +37,7 @@ export default {
     hours: 'hours',
     perHour: ' / hour',
     perDay: ' / day',
+    perProject: ' / project',
     sqft: 'SQFT',
     ft: 'FT',
   },
@@ -131,6 +132,11 @@ export default {
       other: 'Minimum booking is {n} hours. The calendar shows times that are already taken.',
     },
     book: 'Book this service',
+    rate: 'Booking rate',
+    chooseRate: 'Choose',
+    perHour: 'Per hour',
+    perProject: 'Per project',
+    perDay: 'Per day',
   },
   book: {
     kicker: 'Book the house',
@@ -168,6 +174,8 @@ export default {
     bookingLine: '{start}–{end} · {n} {unit} · {status}',
     unavailableName: 'Unavailable',
     unavailable: 'Blocked on the studio calendar.',
+    dayQuote: '{total} for the day',
+    projectQuote: '{total} for the project',
     back: 'Back',
     hours: 'Hours',
     hoursOption: {

@@ -12,6 +12,11 @@ const error = ref('')
 const saving = ref(false)
 const file = ref(null)
 const bannerFile = ref(null)
+const pageLang = ref('en')
+const pageCopy = reactive({
+  en: { heading: '', description: '', tags: '' },
+  fr: { heading: '', description: '', tags: '' },
+})
 
 const bannerForm = reactive({
   page: 'services',
@@ -74,14 +79,55 @@ function fillService(service) {
   })
 }
 
+function tagText(tags) {
+  return Array.isArray(tags) ? tags.join('\n') : ''
+}
+
+function tagList(text) {
+  return String(text || '').split(/\r?\n/).map((tag) => tag.trim()).filter(Boolean)
+}
+
 async function load() {
-  const [serviceData, imageData] = await Promise.all([
+  const [serviceData, imageData, pageData] = await Promise.all([
     api('/api/admin/services'),
     api('/api/admin/site-images?page=services'),
+    api('/api/admin/services-page'),
   ])
   services.value = serviceData.services
   banner.value = imageData.images.find((image) => image.slot === 'hero') || null
   fillBanner(banner.value)
+  for (const lang of ['en', 'fr']) {
+    const text = pageData.content?.[lang] || {}
+    pageCopy[lang].heading = text.heading || ''
+    pageCopy[lang].description = text.description || ''
+    pageCopy[lang].tags = tagText(text.tags)
+  }
+}
+
+async function savePage() {
+  saving.value = true
+  message.value = ''
+  error.value = ''
+  try {
+    const data = await api('/api/admin/services-page', {
+      method: 'POST',
+      body: {
+        en: { ...pageCopy.en, tags: tagList(pageCopy.en.tags) },
+        fr: { ...pageCopy.fr, tags: tagList(pageCopy.fr.tags) },
+      },
+    })
+    for (const lang of ['en', 'fr']) {
+      const text = data.content?.[lang] || {}
+      pageCopy[lang].heading = text.heading || ''
+      pageCopy[lang].description = text.description || ''
+      pageCopy[lang].tags = tagText(text.tags)
+    }
+    message.value = 'Services page saved.'
+  } catch (e) {
+    error.value = e.message
+  } finally {
+    saving.value = false
+  }
 }
 
 function startCreate() {
@@ -173,6 +219,28 @@ onMounted(load)
     </div>
     <p v-if="message" class="type-body-sm text-primary mb-0">{{ message }}</p>
     <p v-if="error" class="type-body-sm text-danger mb-0">{{ error }}</p>
+
+    <form class="admin-card d-flex flex-column gap-3" @submit.prevent="savePage">
+      <h2 class="type-headline-sm text-uppercase">Services page intro</h2>
+      <p class="type-body-sm text-body-secondary mb-0">This heading, description, and tags appear at the top of the public services page. Edit English and French separately. Put each line of the heading, and each tag, on its own line.</p>
+      <div class="d-flex gap-2">
+        <button class="btn btn-quote" :class="pageLang === 'en' ? 'btn-danger' : 'btn-secondary'" type="button" @click="pageLang = 'en'">English</button>
+        <button class="btn btn-quote" :class="pageLang === 'fr' ? 'btn-danger' : 'btn-secondary'" type="button" @click="pageLang = 'fr'">Français</button>
+      </div>
+      <label class="d-flex flex-column gap-1">
+        <span class="type-label-sm text-uppercase">Main heading</span>
+        <textarea v-model="pageCopy[pageLang].heading" class="form-control" required maxlength="240" rows="3"></textarea>
+      </label>
+      <label class="d-flex flex-column gap-1">
+        <span class="type-label-sm text-uppercase">Description</span>
+        <textarea v-model="pageCopy[pageLang].description" class="form-control" required maxlength="800" rows="4"></textarea>
+      </label>
+      <label class="d-flex flex-column gap-1">
+        <span class="type-label-sm text-uppercase">Tags</span>
+        <textarea v-model="pageCopy[pageLang].tags" class="form-control" required rows="4"></textarea>
+      </label>
+      <button class="btn btn-danger btn-quote align-self-start" :disabled="saving" type="submit">{{ saving ? 'Saving...' : 'Save page intro' }}</button>
+    </form>
 
     <form class="admin-card d-flex flex-column gap-3" @submit.prevent="saveBanner">
       <h2 class="type-headline-sm text-uppercase">Services page image</h2>

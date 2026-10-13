@@ -1,18 +1,39 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { api } from '../api'
 import { formatCharge } from '../format'
-import { t, tp } from '../i18n'
+import { locale, t, tp } from '../i18n'
+import { pageSeo } from '../seo'
 
 const banner = ref(null)
 const services = ref([])
+const pageCopy = ref(null)
 const failed = ref(false)
 const error = computed(() => (failed.value ? t('services.loadError') : ''))
+const intro = computed(() => {
+  const text = pageCopy.value?.[locale.value] || {}
+  const lines = String(text.heading || '').split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
+  const tags = Array.isArray(text.tags) ? text.tags.map((tag) => String(tag).trim()).filter(Boolean) : []
+  return {
+    lines: lines.length ? lines : t('services.titleLines'),
+    description: text.description || t('services.lead'),
+    tags: tags.length ? tags : [t('services.fullSpectrum'), t('services.cameras'), t('services.cyc')],
+  }
+})
+
+watch(intro, (value) => {
+  pageSeo.value = { description: value.description }
+}, { immediate: true })
+
+onUnmounted(() => {
+  pageSeo.value = null
+})
 
 onMounted(async () => {
   try {
     const data = await api('/api/services')
     banner.value = data.banner
+    pageCopy.value = data.page || null
     services.value = data.services
   } catch (e) {
     failed.value = true
@@ -31,25 +52,17 @@ onMounted(async () => {
             <span class="type-overline text-uppercase ls-25 text-danger">{{ t('services.kicker') }}</span>
           </div>
           <h1 class="type-headline-mobile type-md-headline-lg text-uppercase lh-1 ls-tight">
-            <template v-for="(line, index) in t('services.titleLines')" :key="line">
-              {{ line }}<br v-if="index < t('services.titleLines').length - 1">
+            <template v-for="(line, index) in intro.lines" :key="index">
+              {{ line }}<br v-if="index < intro.lines.length - 1">
             </template>
           </h1>
           <p class="type-body-lg text-body-secondary max-w-xl pt-1">
-            {{ t('services.lead') }}
+            {{ intro.description }}
           </p>
           <div class="d-flex flex-wrap align-items-center gap-3 pt-2">
-            <div class="d-flex align-items-center gap-1 text-body-secondary type-label-sm text-uppercase">
+            <div v-for="tag in intro.tags" :key="tag" class="d-flex align-items-center gap-1 text-body-secondary type-label-sm text-uppercase">
               <span class="material-symbols-outlined text-danger icon-16">check_circle</span>
-              <span>{{ t('services.fullSpectrum') }}</span>
-            </div>
-            <div class="d-flex align-items-center gap-1 text-body-secondary type-label-sm text-uppercase">
-              <span class="material-symbols-outlined text-danger icon-16">check_circle</span>
-              <span>{{ t('services.cameras') }}</span>
-            </div>
-            <div class="d-flex align-items-center gap-1 text-body-secondary type-label-sm text-uppercase">
-              <span class="material-symbols-outlined text-danger icon-16">check_circle</span>
-              <span>{{ t('services.cyc') }}</span>
+              <span>{{ tag }}</span>
             </div>
           </div>
         </div>

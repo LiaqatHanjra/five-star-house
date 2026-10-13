@@ -6,6 +6,11 @@ import { formatMoney } from '../format'
 import { dateLocale, hourUnit, locale, statusLabel, t, tp } from '../i18n'
 import { pageSeo } from '../seo'
 
+const props = defineProps({
+  billingUnit: { type: String, default: '' },
+  embedded: { type: Boolean, default: false },
+})
+
 const route = useRoute()
 const router = useRouter()
 const service = ref(null)
@@ -30,6 +35,8 @@ const form = reactive({
   message: '',
 })
 
+const selectedUnit = ref(props.billingUnit || '')
+
 const kind = computed(() => {
   if (route.params.slug) return 'service'
   if (route.params.kind === 'studio-event') return 'studio_event'
@@ -49,7 +56,8 @@ const title = computed(() => {
 })
 
 const needsEvent = computed(() => kind.value === 'studio_event' || kind.value === 'owner_event')
-const backTo = computed(() => (route.params.slug ? `/services/${route.params.slug}` : '/book'))
+const byHour = computed(() => selectedUnit.value === 'hour')
+const backTo = computed(() => (route.params.slug && !props.embedded ? `/services/${route.params.slug}` : '/book'))
 const monthKey = computed(() => `${cursor.value.getFullYear()}-${String(cursor.value.getMonth() + 1).padStart(2, '0')}`)
 const monthLabel = computed(() => cursor.value.toLocaleDateString(dateLocale(), { month: 'long', year: 'numeric' }))
 const weekdays = computed(() => t('calendar.weekdays'))
@@ -89,6 +97,17 @@ const maxHours = computed(() => {
   return Math.max(count, windowInfo.value.minimum_hours || 1)
 })
 
+const quoteLine = computed(() => {
+  if (!quote.value) return ''
+  const total = formatMoney(quote.value.amount, quote.value.currency)
+  if (selectedUnit.value === 'day') return t('wizard.dayQuote', { total })
+  if (selectedUnit.value === 'project') return t('wizard.projectQuote', { total })
+  return tp('wizard.quote', hours.value, {
+    rate: formatMoney(quote.value.hourly_rate, quote.value.currency),
+    total,
+  })
+})
+
 const hourChoices = computed(() => {
   const min = service.value?.minimum_hours || windowInfo.value.minimum_hours || 1
   const list = []
@@ -113,6 +132,7 @@ async function loadMonth() {
 
 async function selectDate(day) {
   if (!day.iso || day.past) return
+  if (!byHour.value && day.bookings?.length) return
   selectedDate.value = day.iso
   startTime.value = ''
   const params = new URLSearchParams({
@@ -123,6 +143,13 @@ async function selectDate(day) {
   const data = await api(`/api/availability?${params}`)
   slots.value = data.slots || []
   windowInfo.value = data.window
+  if (!byHour.value) {
+    if (slots.value.some((slot) => slot.booked)) {
+      selectedDate.value = ''
+      return
+    }
+    startTime.value = windowInfo.value.open
+  }
 }
 
 function pickStart(slot) {
@@ -134,12 +161,14 @@ function pickStart(slot) {
 
 async function refreshQuote() {
   if (!hours.value) return
+  if (kind.value === 'service' && !service.value?.id) return
   quote.value = await api('/api/quotes', {
     method: 'POST',
     body: {
       booking_kind: kind.value,
       service_id: service.value?.id || null,
-      hours: hours.value,
+      hours: byHour.value ? hours.value : 1,
+      charge_unit: selectedUnit.value || 'hour',
     },
   })
 }
@@ -154,8 +183,9 @@ async function submit() {
         booking_kind: kind.value,
         service_id: service.value?.id || null,
         booking_date: selectedDate.value,
-        start_time: startTime.value,
-        hours: hours.value,
+        start_time: byHour.value ? startTime.value : windowInfo.value.open,
+        hours: byHour.value ? hours.value : 1,
+        charge_unit: selectedUnit.value || 'hour',
         ...form,
       },
     })
@@ -169,6 +199,15 @@ async function submit() {
 
 watch(hours, refreshQuote)
 watch(monthKey, loadMonth)
+watch(() => props.billingUnit, (value) => {
+  selectedUnit.value = value || ''
+})
+watch(selectedUnit, () => {
+  selectedDate.value = ''
+  startTime.value = ''
+  slots.value = []
+  refreshQuote()
+})
 watch([title, service], () => {
   const name = title.value
   if (!name || String(name).startsWith('book.titles.')) return
@@ -180,7 +219,7 @@ watch([title, service], () => {
 }, { immediate: true })
 
 onUnmounted(() => {
-  pageSeo.value = null
+  if (!props.embedded) pageSeo.value = null
 })
 
 onMounted(async () => {
@@ -199,17 +238,27 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="site-wrap py-xl py-lg-3xl d-flex flex-column gap-4">
-    <div class="d-flex flex-column align-items-start gap-3">
+  <div :class="embedded ? 'd-flex flex-column gap-4' : 'site-wrap py-xl py-lg-3xl d-flex flex-column gap-4'">
+    <div v-if="!embedded" class="d-flex flex-column align-items-start gap-3">
       <RouterLink class="btn btn-secondary btn-quote" :to="backTo">{{ t('wizard.back') }}</RouterLink>
       <div>
-        <p class="type-overline text-uppercase ls-20 text-danger">{{ tp('wizard.minimum', service?.minimum_hours || windowInfo.minimum_hours || 1) }}</p>
         <h1 class="type-headline-md text-uppercase">{{ title }}</h1>
-        <p v-if="quote" class="type-body-md text-primary mb-0">{{ tp('wizard.quote', hours, { rate: formatMoney(quote.hourly_rate, quote.currency), total: formatMoney(quote.amount, quote.currency) }) }}</p>
+        <p v-if="!selectedUnit || byHour" class="type-overline text-uppercase ls-20 text-danger mb-0">{{ tp('wizard.minimum', service?.minimum_hours || windowInfo.minimum_hours || 1) }}</p>
+        <p v-if="selectedUnit && quoteLine" class="type-body-md text-primary mb-0">{{ quoteLine }}</p>
       </div>
+      <label class="d-flex flex-column gap-1">
+        <span class="type-label-sm text-uppercase">{{ t('detail.rate') }}</span>
+        <select v-model="selectedUnit" class="form-select">
+          <option value="">{{ t('detail.chooseRate') }}</option>
+          <option value="hour">{{ t('detail.perHour') }}</option>
+          <option value="project">{{ t('detail.perProject') }}</option>
+          <option value="day">{{ t('detail.perDay') }}</option>
+        </select>
+      </label>
     </div>
+    <p v-else-if="quoteLine" class="type-body-md text-primary mb-0">{{ quoteLine }}</p>
 
-    <div class="row g-4">
+    <div v-if="selectedUnit" class="row g-4">
       <div class="col-lg-5">
         <div class="bg-dark p-3 p-md-4 d-flex flex-column gap-3">
           <div class="d-flex justify-content-between align-items-center">
@@ -249,7 +298,7 @@ onMounted(async () => {
       </div>
 
       <div class="col-lg-7 d-flex flex-column gap-4">
-        <div v-if="selectedDate" class="bg-dark p-3 p-md-4">
+        <div v-if="selectedDate && byHour" class="bg-dark p-3 p-md-4">
           <h2 class="type-headline-sm text-uppercase mb-3">{{ t('wizard.chooseStart', { date: selectedDate }) }}</h2>
           <div class="hour-row">
             <span v-for="slot in slots" :key="slot.time" class="hour-wrap">
@@ -278,8 +327,8 @@ onMounted(async () => {
           <p class="type-body-sm text-body-tertiary mt-3 mb-0">{{ t('wizard.slotHint', { open: windowInfo.open, close: windowInfo.close }) }}</p>
         </div>
 
-        <form v-if="startTime" class="bg-dark p-3 p-md-4 d-flex flex-column gap-3" @submit.prevent="submit">
-          <div class="d-flex flex-column gap-1">
+        <form v-if="byHour ? startTime : selectedDate" class="bg-dark p-3 p-md-4 d-flex flex-column gap-3" @submit.prevent="submit">
+          <div v-if="byHour" class="d-flex flex-column gap-1">
             <label class="type-label-sm text-uppercase">{{ t('wizard.hours') }}</label>
             <select v-model.number="hours" class="form-select">
               <option v-for="choice in hourChoices" :key="choice" :value="choice">{{ tp('wizard.hoursOption', choice) }}</option>

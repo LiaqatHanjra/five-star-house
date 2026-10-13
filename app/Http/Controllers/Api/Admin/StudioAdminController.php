@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\SiteSetting;
 use App\Support\BookingPageContent;
+use App\Support\ServicesPageContent;
 use Illuminate\Http\Request;
 
 class StudioAdminController extends Controller
@@ -89,5 +90,35 @@ class StudioAdminController extends Controller
         }
 
         return response()->json(['content' => BookingPageContent::resolved()]);
+    }
+
+    public function servicesPage()
+    {
+        return response()->json(['content' => ServicesPageContent::resolved()]);
+    }
+
+    public function updateServicesPage(Request $request)
+    {
+        $rules = [];
+        foreach (ServicesPageContent::LOCALES as $locale) {
+            $rules[$locale.'.heading'] = ['required', 'string', 'max:240'];
+            $rules[$locale.'.description'] = ['required', 'string', 'max:800'];
+            $rules[$locale.'.tags'] = ['required', 'array', 'min:1', 'max:8'];
+            $rules[$locale.'.tags.*'] = ['required', 'string', 'max:80'];
+        }
+
+        $data = $request->validate($rules);
+
+        foreach (ServicesPageContent::LOCALES as $locale) {
+            SiteSetting::putPairs([
+                'services_page_'.$locale => json_encode([
+                    'heading' => ServicesPageContent::heading($data[$locale]['heading']),
+                    'description' => trim($data[$locale]['description']),
+                    'tags' => ServicesPageContent::tags($data[$locale]['tags']),
+                ], JSON_UNESCAPED_UNICODE),
+            ]);
+        }
+
+        return response()->json(['content' => ServicesPageContent::resolved()]);
     }
 }

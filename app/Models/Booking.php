@@ -22,6 +22,7 @@ class Booking extends Model
         'start_time',
         'end_time',
         'hours',
+        'charge_unit',
         'hourly_rate',
         'amount',
         'timeline',

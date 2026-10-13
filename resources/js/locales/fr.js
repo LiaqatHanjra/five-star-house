@@ -37,6 +37,7 @@ export default {
     hours: 'heures',
     perHour: ' / heure',
     perDay: ' / jour',
+    perProject: ' / projet',
     sqft: 'PI²',
     ft: 'PI',
   },
@@ -131,6 +132,11 @@ export default {
       other: 'La réservation minimale est de {n} heures. Le calendrier indique les heures déjà prises.',
     },
     book: 'Réserver ce service',
+    rate: 'Tarif',
+    chooseRate: 'Choisir',
+    perHour: 'À l’heure',
+    perProject: 'Par projet',
+    perDay: 'À la journée',
   },
   book: {
     kicker: 'Réserver la maison',
@@ -168,6 +174,8 @@ export default {
     bookingLine: '{start}–{end} · {n} {unit} · {status}',
     unavailableName: 'Indisponible',
     unavailable: 'Bloqué sur le calendrier du studio.',
+    dayQuote: '{total} pour la journée',
+    projectQuote: '{total} pour le projet',
     back: 'Retour',
     hours: 'Heures',
     hoursOption: {
