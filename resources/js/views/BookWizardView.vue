@@ -7,7 +7,6 @@ import { dateLocale, hourUnit, locale, statusLabel, t, tp } from '../i18n'
 import { pageSeo } from '../seo'
 
 const props = defineProps({
-  billingUnit: { type: String, default: '' },
   embedded: { type: Boolean, default: false },
 })
 
@@ -35,8 +34,6 @@ const form = reactive({
   message: '',
 })
 
-const selectedUnit = ref(props.billingUnit || '')
-
 const kind = computed(() => {
   if (route.params.slug) return 'service'
   if (route.params.kind === 'studio-event') return 'studio_event'
@@ -56,7 +53,7 @@ const title = computed(() => {
 })
 
 const needsEvent = computed(() => kind.value === 'studio_event' || kind.value === 'owner_event')
-const byHour = computed(() => selectedUnit.value === 'hour')
+const byHour = computed(() => true)
 const backTo = computed(() => (route.params.slug && !props.embedded ? `/services/${route.params.slug}` : '/book'))
 const monthKey = computed(() => `${cursor.value.getFullYear()}-${String(cursor.value.getMonth() + 1).padStart(2, '0')}`)
 const monthLabel = computed(() => cursor.value.toLocaleDateString(dateLocale(), { month: 'long', year: 'numeric' }))
@@ -100,8 +97,6 @@ const maxHours = computed(() => {
 const quoteLine = computed(() => {
   if (!quote.value) return ''
   const total = formatMoney(quote.value.amount, quote.value.currency)
-  if (selectedUnit.value === 'day') return t('wizard.dayQuote', { total })
-  if (selectedUnit.value === 'project') return t('wizard.projectQuote', { total })
   return tp('wizard.quote', hours.value, {
     rate: formatMoney(quote.value.hourly_rate, quote.value.currency),
     total,
@@ -167,8 +162,8 @@ async function refreshQuote() {
     body: {
       booking_kind: kind.value,
       service_id: service.value?.id || null,
-      hours: byHour.value ? hours.value : 1,
-      charge_unit: selectedUnit.value || 'hour',
+      hours: hours.value,
+      charge_unit: 'hour',
     },
   })
 }
@@ -183,9 +178,9 @@ async function submit() {
         booking_kind: kind.value,
         service_id: service.value?.id || null,
         booking_date: selectedDate.value,
-        start_time: byHour.value ? startTime.value : windowInfo.value.open,
-        hours: byHour.value ? hours.value : 1,
-        charge_unit: selectedUnit.value || 'hour',
+        start_time: startTime.value,
+        hours: hours.value,
+        charge_unit: 'hour',
         ...form,
       },
     })
@@ -199,15 +194,6 @@ async function submit() {
 
 watch(hours, refreshQuote)
 watch(monthKey, loadMonth)
-watch(() => props.billingUnit, (value) => {
-  selectedUnit.value = value || ''
-})
-watch(selectedUnit, () => {
-  selectedDate.value = ''
-  startTime.value = ''
-  slots.value = []
-  refreshQuote()
-})
 watch([title, service], () => {
   const name = title.value
   if (!name || String(name).startsWith('book.titles.')) return
@@ -243,22 +229,13 @@ onMounted(async () => {
       <RouterLink class="btn btn-secondary btn-quote" :to="backTo">{{ t('wizard.back') }}</RouterLink>
       <div>
         <h1 class="type-headline-md text-uppercase">{{ title }}</h1>
-        <p v-if="!selectedUnit || byHour" class="type-overline text-uppercase ls-20 text-danger mb-0">{{ tp('wizard.minimum', service?.minimum_hours || windowInfo.minimum_hours || 1) }}</p>
-        <p v-if="selectedUnit && quoteLine" class="type-body-md text-primary mb-0">{{ quoteLine }}</p>
+        <p class="type-overline text-uppercase ls-20 text-danger mb-0">{{ tp('wizard.minimum', service?.minimum_hours || windowInfo.minimum_hours || 1) }}</p>
+        <p v-if="quoteLine" class="type-body-md text-primary mb-0">{{ quoteLine }}</p>
       </div>
-      <label class="d-flex flex-column gap-1">
-        <span class="type-label-sm text-uppercase">{{ t('detail.rate') }}</span>
-        <select v-model="selectedUnit" class="form-select">
-          <option value="">{{ t('detail.chooseRate') }}</option>
-          <option value="hour">{{ t('detail.perHour') }}</option>
-          <option value="project">{{ t('detail.perProject') }}</option>
-          <option value="day">{{ t('detail.perDay') }}</option>
-        </select>
-      </label>
     </div>
     <p v-else-if="quoteLine" class="type-body-md text-primary mb-0">{{ quoteLine }}</p>
 
-    <div v-if="selectedUnit" class="row g-4">
+    <div class="row g-4">
       <div class="col-lg-5">
         <div class="bg-dark p-3 p-md-4 d-flex flex-column gap-3">
           <div class="d-flex justify-content-between align-items-center">

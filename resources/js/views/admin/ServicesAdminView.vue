@@ -304,14 +304,6 @@ onMounted(load)
             <input v-model="form.currency" class="form-control" maxlength="3" required>
           </div>
           <div class="col-md-3 d-flex flex-column gap-1">
-            <label class="type-label-sm text-uppercase">Charged</label>
-            <select v-model="form.charge_unit" class="form-select">
-              <option value="hour">Per hour</option>
-              <option value="project">Per project</option>
-              <option value="day">Per day</option>
-            </select>
-          </div>
-          <div class="col-md-3 d-flex flex-column gap-1">
             <label class="type-label-sm text-uppercase">Minimum hours</label>
             <input v-model.number="form.minimum_hours" class="form-control" min="1" max="12" type="number">
           </div>
