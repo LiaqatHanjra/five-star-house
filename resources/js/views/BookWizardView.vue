@@ -10,6 +10,8 @@ const props = defineProps({
   embedded: { type: Boolean, default: false },
 })
 
+const emit = defineEmits(['unit-change'])
+
 const route = useRoute()
 const router = useRouter()
 const service = ref(null)
@@ -24,6 +26,7 @@ const hours = ref(1)
 const error = ref('')
 const sending = ref(false)
 const quote = ref(null)
+const selectedUnit = ref('')
 
 const form = reactive({
   full_name: '',
@@ -53,7 +56,9 @@ const title = computed(() => {
 })
 
 const needsEvent = computed(() => kind.value === 'studio_event' || kind.value === 'owner_event')
-const byHour = computed(() => true)
+const isService = computed(() => kind.value === 'service')
+const byHour = computed(() => !isService.value || selectedUnit.value === 'hour')
+const showCalendar = computed(() => !isService.value || selectedUnit.value !== '')
 const backTo = computed(() => (route.params.slug && !props.embedded ? `/services/${route.params.slug}` : '/book'))
 const monthKey = computed(() => `${cursor.value.getFullYear()}-${String(cursor.value.getMonth() + 1).padStart(2, '0')}`)
 const monthLabel = computed(() => cursor.value.toLocaleDateString(dateLocale(), { month: 'long', year: 'numeric' }))
@@ -97,6 +102,8 @@ const maxHours = computed(() => {
 const quoteLine = computed(() => {
   if (!quote.value) return ''
   const total = formatMoney(quote.value.amount, quote.value.currency)
+  if (isService.value && selectedUnit.value === 'day') return t('wizard.dayQuote', { total })
+  if (isService.value && selectedUnit.value === 'project') return t('wizard.projectQuote', { total })
   return tp('wizard.quote', hours.value, {
     rate: formatMoney(quote.value.hourly_rate, quote.value.currency),
     total,
@@ -156,14 +163,19 @@ function pickStart(slot) {
 
 async function refreshQuote() {
   if (!hours.value) return
-  if (kind.value === 'service' && !service.value?.id) return
+  if (isService.value && !service.value?.id) return
+  if (isService.value && !selectedUnit.value) {
+    quote.value = null
+    return
+  }
+  const unit = isService.value ? selectedUnit.value : 'hour'
   quote.value = await api('/api/quotes', {
     method: 'POST',
     body: {
       booking_kind: kind.value,
       service_id: service.value?.id || null,
-      hours: hours.value,
-      charge_unit: 'hour',
+      hours: unit === 'hour' ? hours.value : 1,
+      charge_unit: unit,
     },
   })
 }
@@ -178,9 +190,9 @@ async function submit() {
         booking_kind: kind.value,
         service_id: service.value?.id || null,
         booking_date: selectedDate.value,
-        start_time: startTime.value,
-        hours: hours.value,
-        charge_unit: 'hour',
+        start_time: byHour.value ? startTime.value : windowInfo.value.open,
+        hours: byHour.value ? hours.value : 1,
+        charge_unit: isService.value ? selectedUnit.value : 'hour',
         ...form,
       },
     })
@@ -193,6 +205,13 @@ async function submit() {
 }
 
 watch(hours, refreshQuote)
+watch(selectedUnit, () => {
+  selectedDate.value = ''
+  startTime.value = ''
+  slots.value = []
+  emit('unit-change', selectedUnit.value)
+  refreshQuote()
+})
 watch(monthKey, loadMonth)
 watch([title, service], () => {
   const name = title.value
@@ -233,9 +252,18 @@ onMounted(async () => {
         <p v-if="quoteLine" class="type-body-md text-primary mb-0">{{ quoteLine }}</p>
       </div>
     </div>
-    <p v-else-if="quoteLine" class="type-body-md text-primary mb-0">{{ quoteLine }}</p>
+    <div v-if="isService" class="d-flex flex-column gap-1" :class="{ 'mt-5 pt-lg-3': embedded }">
+      <label class="type-label-sm text-uppercase" for="service-rate">{{ t('detail.rate') }}</label>
+      <select id="service-rate" v-model="selectedUnit" class="form-select">
+        <option value="">{{ t('detail.chooseRate') }}</option>
+        <option value="hour">{{ t('detail.perHour') }}</option>
+        <option value="day">{{ t('detail.perDay') }}</option>
+        <option value="project">{{ t('detail.perProject') }}</option>
+      </select>
+    </div>
+    <p v-if="embedded && quoteLine" class="type-body-md text-primary mb-0">{{ quoteLine }}</p>
 
-    <div class="row g-4">
+    <div v-if="showCalendar" class="row g-4">
       <div class="col-lg-5">
         <div class="bg-dark p-3 p-md-4 d-flex flex-column gap-3">
           <div class="d-flex justify-content-between align-items-center">

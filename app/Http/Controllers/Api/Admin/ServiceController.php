@@ -62,6 +62,8 @@ class ServiceController extends Controller
             'eyebrow' => ['nullable', 'string', 'max:160'],
             'badge' => ['nullable', 'string', 'max:160'],
             'charge' => ['required', 'numeric', 'min:0', 'max:999999.99'],
+            'day_charge' => ['required', 'numeric', 'min:0', 'max:999999.99'],
+            'project_charge' => ['required', 'numeric', 'min:0', 'max:999999.99'],
             'currency' => ['required', 'string', 'size:3'],
             'charge_unit' => ['required', Rule::in(['hour', 'project', 'day'])],
             'minimum_hours' => ['nullable', 'integer', 'min:1', 'max:12'],

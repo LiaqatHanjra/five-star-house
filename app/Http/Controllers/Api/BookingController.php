@@ -82,7 +82,7 @@ class BookingController extends Controller
             'charge_unit' => ['nullable', Rule::in(['hour', 'day', 'project'])],
         ]);
 
-        $rate = $this->rateFor($data['booking_kind'], $data['service_id'] ?? null);
+        $rate = $this->rateFor($data['booking_kind'], $data['service_id'] ?? null, $data['charge_unit'] ?? 'hour');
         $flat = $this->flatService($data);
         if (! $flat && $data['hours'] < $rate['minimum_hours']) {
             return response()->json([
@@ -131,7 +131,7 @@ class BookingController extends Controller
             $data = $this->applyDaySpan($data);
         }
 
-        $rate = $this->rateFor($data['booking_kind'], $data['service_id'] ?? null);
+        $rate = $this->rateFor($data['booking_kind'], $data['service_id'] ?? null, $data['charge_unit'] ?? 'hour');
         if (! $flat && $data['hours'] < $rate['minimum_hours']) {
             return response()->json([
                 'message' => 'This booking needs at least '.$rate['minimum_hours'].' hours.',
@@ -571,7 +571,8 @@ class BookingController extends Controller
 
     private function flatService(array $data): bool
     {
-        return in_array($data['charge_unit'] ?? 'hour', ['day', 'project'], true);
+        return ($data['booking_kind'] ?? '') === 'service'
+            && in_array($data['charge_unit'] ?? 'hour', ['day', 'project'], true);
     }
 
     private function applyDaySpan(array $data): array
@@ -583,16 +584,21 @@ class BookingController extends Controller
         return $data;
     }
 
-    private function rateFor(string $kind, ?int $serviceId): array
+    private function rateFor(string $kind, ?int $serviceId, string $unit = 'hour'): array
     {
         $currency = SiteSetting::getValue('currency', 'CAD');
         $minimum = max(1, (int) SiteSetting::getValue('minimum_hours', '1'));
 
         if ($kind === 'service') {
             $service = Service::query()->where('is_active', true)->findOrFail($serviceId);
+            $price = match ($unit) {
+                'day' => (float) $service->day_charge,
+                'project' => (float) $service->project_charge,
+                default => (float) $service->charge,
+            };
 
             return [
-                'hourly_rate' => (float) $service->charge,
+                'hourly_rate' => $price,
                 'currency' => $service->currency ?: $currency,
                 'minimum_hours' => max(1, (int) ($service->minimum_hours ?: $minimum)),
                 'label' => $service->title,

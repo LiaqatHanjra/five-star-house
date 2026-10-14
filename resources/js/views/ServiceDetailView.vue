@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { api } from '../api'
-import { formatCharge } from '../format'
+import { formatCharge, formatMoney } from '../format'
 import { t, tp } from '../i18n'
 import { pageSeo } from '../seo'
 import BookWizardView from './BookWizardView.vue'
@@ -10,10 +10,22 @@ import BookWizardView from './BookWizardView.vue'
 const route = useRoute()
 const service = ref(null)
 const failed = ref(false)
+const billingUnit = ref('')
 
 const minimum = computed(() => service.value?.minimum_hours || 1)
 const error = computed(() => (failed.value ? t('detail.missing') : ''))
-const priceLabel = computed(() => formatCharge(service.value))
+const priceLabel = computed(() => {
+  if (!service.value || !billingUnit.value) return formatCharge(service.value)
+  const amount = billingUnit.value === 'day'
+    ? service.value.day_charge
+    : billingUnit.value === 'project'
+      ? service.value.project_charge
+      : service.value.charge
+  const formatted = formatMoney(amount, service.value.currency)
+  if (billingUnit.value === 'hour') return `${formatted}${t('units.perHour')}`
+  if (billingUnit.value === 'day') return `${formatted}${t('units.perDay')}`
+  return `${formatted}${t('units.perProject')}`
+})
 
 watch(service, (value) => {
   if (!value) return
@@ -60,7 +72,7 @@ onMounted(async () => {
         </div>
       </div>
     </div>
-    <BookWizardView embedded />
+    <BookWizardView embedded @unit-change="billingUnit = $event" />
   </section>
   <section v-else class="site-wrap py-3xl">
     <p class="type-body-md text-danger">{{ error || t('detail.loading') }}</p>

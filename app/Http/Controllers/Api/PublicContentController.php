@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Service;
 use App\Models\SiteImage;
+use App\Support\HomePageContent;
 use App\Support\ServicesPageContent;
 
 class PublicContentController extends Controller
@@ -21,6 +22,7 @@ class PublicContentController extends Controller
             'hero' => $images->firstWhere('slot', 'hero')?->toPublicArray(),
             'works' => $images->where('slot', 'gallery')->values()->map->toPublicArray(),
             'services' => $this->activeServices(),
+            'page' => HomePageContent::resolved(),
         ]);
     }
 

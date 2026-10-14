@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\SiteSetting;
 use App\Support\BookingPageContent;
+use App\Support\HomePageContent;
 use App\Support\ServicesPageContent;
 use Illuminate\Http\Request;
 
@@ -120,5 +121,39 @@ class StudioAdminController extends Controller
         }
 
         return response()->json(['content' => ServicesPageContent::resolved()]);
+    }
+
+    public function homePage()
+    {
+        return response()->json(['content' => HomePageContent::resolved()]);
+    }
+
+    public function updateHomePage(Request $request)
+    {
+        $rules = [];
+        foreach (HomePageContent::LOCALES as $locale) {
+            $rules[$locale.'.heading'] = ['required', 'string', 'max:240'];
+            $rules[$locale.'.description'] = ['required', 'string', 'max:800'];
+            $rules[$locale.'.tags'] = ['required', 'array', 'min:1', 'max:8'];
+            $rules[$locale.'.tags.*'] = ['required', 'string', 'max:80'];
+            $rules[$locale.'.button'] = ['required', 'string', 'max:60'];
+            $rules[$locale.'.button_secondary'] = ['required', 'string', 'max:60'];
+        }
+
+        $data = $request->validate($rules);
+
+        foreach (HomePageContent::LOCALES as $locale) {
+            SiteSetting::putPairs([
+                'home_page_'.$locale => json_encode([
+                    'heading' => ServicesPageContent::heading($data[$locale]['heading']),
+                    'description' => trim($data[$locale]['description']),
+                    'tags' => ServicesPageContent::tags($data[$locale]['tags']),
+                    'button' => trim($data[$locale]['button']),
+                    'button_secondary' => trim($data[$locale]['button_secondary']),
+                ], JSON_UNESCAPED_UNICODE),
+            ]);
+        }
+
+        return response()->json(['content' => HomePageContent::resolved()]);
     }
 }

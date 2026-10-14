@@ -59,6 +59,8 @@ Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
     Route::post('/booking-page', [StudioAdminController::class, 'updateBookingPage']);
     Route::get('/services-page', [StudioAdminController::class, 'servicesPage']);
     Route::post('/services-page', [StudioAdminController::class, 'updateServicesPage']);
+    Route::get('/home-page', [StudioAdminController::class, 'homePage']);
+    Route::post('/home-page', [StudioAdminController::class, 'updateHomePage']);
 
     Route::get('/calendar', [GoogleCalendarController::class, 'show']);
     Route::post('/calendar/connect', [GoogleCalendarController::class, 'connect']);

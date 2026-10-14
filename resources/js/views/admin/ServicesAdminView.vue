@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { api } from '../../api'
-import { formatCharge } from '../../format'
+import { formatMoney } from '../../format'
 
 const services = ref([])
 const banner = ref(null)
@@ -41,6 +41,8 @@ const emptyService = () => ({
   eyebrow: '',
   badge: '',
   charge: 0,
+  day_charge: 0,
+  project_charge: 0,
   currency: 'CAD',
   charge_unit: 'hour',
   minimum_hours: 1,
@@ -54,6 +56,11 @@ const emptyService = () => ({
 
 const form = reactive(emptyService())
 const preview = computed(() => (file.value ? URL.createObjectURL(file.value) : form.image_url))
+
+function priceLine(service) {
+  const money = (amount) => formatMoney(amount, service.currency)
+  return `${money(service.charge)} / hour · ${money(service.day_charge)} / day · ${money(service.project_charge)} / project`
+}
 
 function fillBanner(image) {
   Object.assign(bannerForm, {
@@ -76,6 +83,8 @@ function fillService(service) {
     ...service,
     tags: (service.tags || []).join(', '),
     charge: Number(service.charge),
+    day_charge: Number(service.day_charge || 0),
+    project_charge: Number(service.project_charge || 0),
   })
 }
 
@@ -275,7 +284,7 @@ onMounted(load)
         <button v-for="service in services" :key="service.id" class="admin-card text-start border-0" type="button" @click="edit(service)">
           <div class="type-label-sm text-danger">{{ service.number }}</div>
           <div class="type-headline-sm text-uppercase">{{ service.title }}</div>
-          <div class="type-body-sm text-primary">{{ formatCharge(service) }}</div>
+          <div class="type-body-sm text-primary">{{ priceLine(service) }}</div>
         </button>
       </div>
 
@@ -296,8 +305,16 @@ onMounted(load)
             <input v-model="form.slug" class="form-control" placeholder="auto from title">
           </div>
           <div class="col-md-4 d-flex flex-column gap-1">
-            <label class="type-label-sm text-uppercase">Hourly rate</label>
+            <label class="type-label-sm text-uppercase">Price per hour</label>
             <input v-model="form.charge" class="form-control" min="0" required step="0.01" type="number">
+          </div>
+          <div class="col-md-4 d-flex flex-column gap-1">
+            <label class="type-label-sm text-uppercase">Price per day</label>
+            <input v-model="form.day_charge" class="form-control" min="0" required step="0.01" type="number">
+          </div>
+          <div class="col-md-4 d-flex flex-column gap-1">
+            <label class="type-label-sm text-uppercase">Price per project</label>
+            <input v-model="form.project_charge" class="form-control" min="0" required step="0.01" type="number">
           </div>
           <div class="col-md-2 d-flex flex-column gap-1">
             <label class="type-label-sm text-uppercase">Currency</label>

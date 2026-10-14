@@ -16,6 +16,8 @@ class Service extends Model
         'eyebrow',
         'badge',
         'charge',
+        'day_charge',
+        'project_charge',
         'currency',
         'charge_unit',
         'minimum_hours',
@@ -31,6 +33,8 @@ class Service extends Model
     {
         return [
             'charge' => 'decimal:2',
+            'day_charge' => 'decimal:2',
+            'project_charge' => 'decimal:2',
             'minimum_hours' => 'integer',
             'tags' => 'array',
             'is_active' => 'boolean',
@@ -55,6 +59,8 @@ class Service extends Model
             'eyebrow' => $this->eyebrow,
             'badge' => $this->badge,
             'charge' => $this->charge,
+            'day_charge' => $this->day_charge,
+            'project_charge' => $this->project_charge,
             'currency' => $this->currency,
             'charge_unit' => $this->charge_unit,
             'minimum_hours' => $this->minimum_hours ?: 1,
