@@ -63,7 +63,9 @@ class BookingController extends Controller
         $payload = ['window' => $window];
 
         if (! empty($data['month'])) {
-            $payload['marks'] = $this->schedule->monthMarks($data['month']);
+            $marks = $this->schedule->monthMarks($data['month']);
+            $payload['marks'] = $marks;
+            $payload['free'] = $this->schedule->freeHours($data['month'], $marks);
         }
 
         if (! empty($data['date'])) {

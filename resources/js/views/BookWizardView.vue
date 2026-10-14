@@ -18,6 +18,7 @@ const service = ref(null)
 const pageContent = ref(null)
 const windowInfo = ref({ open: '09:00', close: '19:00', minimum_hours: 1, currency: 'CAD' })
 const marks = ref({})
+const freeHours = ref({})
 const slots = ref([])
 const cursor = ref(new Date())
 const selectedDate = ref('')
@@ -83,6 +84,7 @@ const days = computed(() => {
       label: day,
       past: date < today,
       bookings,
+      freeHours: Number(freeHours.value[iso] ?? 0),
     })
   }
   return cells
@@ -130,6 +132,7 @@ async function loadMonth() {
   const data = await api(`/api/availability?${params}`)
   windowInfo.value = data.window
   marks.value = data.marks || {}
+  freeHours.value = data.free || {}
 }
 
 async function selectDate(day) {
@@ -283,17 +286,9 @@ onMounted(async () => {
                 type="button"
                 @click="selectDate(day)"
               >{{ day.label }}</button>
-              <span v-if="day.bookings?.length" class="cal-tip">
-                <span v-for="booking in day.bookings" :key="booking.reference" class="cal-tip-item">
-                  <template v-if="booking.status === 'busy'">
-                    <strong>{{ t('wizard.unavailableName') }}</strong>
-                    <span>{{ t('wizard.unavailable') }}</span>
-                  </template>
-                  <template v-else>
-                    <strong>{{ booking.name }}</strong>
-                    <span>{{ booking.title }}</span>
-                    <span>{{ t('wizard.bookingLine', { start: booking.start, end: booking.end, n: booking.hours, unit: hourUnit(booking.hours), status: statusLabel(booking.status) }) }}</span>
-                  </template>
+              <span v-if="day.bookings?.length" class="cal-tip" :class="day.freeHours ? 'is-open' : 'is-full'">
+                <span class="cal-tip-item" :class="day.freeHours ? 'cal-tip-open' : 'cal-tip-full'">
+                  {{ day.freeHours ? tp('wizard.slotAvailable', day.freeHours) : t('wizard.slotFull') }}
                 </span>
               </span>
             </span>

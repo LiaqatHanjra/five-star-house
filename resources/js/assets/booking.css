@@ -49,7 +49,8 @@
   bottom: calc(100% + .35rem);
   width: max-content;
   max-width: 16rem;
-  padding: .65rem .75rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.25rem;
   background: #0e0e0e;
   border: 1px solid var(--red);
   color: var(--copy);
@@ -81,6 +82,16 @@
   font-size: .8rem;
   letter-spacing: .04em;
 }
+.cal-tip.is-open { border-color: #3ddc97; }
+.cal-tip-open,
+.cal-tip-full {
+  font-family: var(--display);
+  font-size: .78rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.cal-tip-open { color: #3ddc97; }
+.cal-tip-full { color: #ffb4ab; }
 
 .hour-row { display: flex; flex-wrap: wrap; gap: .5rem; }
 .hour-chip {

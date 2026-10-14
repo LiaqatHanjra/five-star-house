@@ -115,6 +115,54 @@ class StudioSchedule
         return $marks;
     }
 
+    public function freeHours(string $month, ?array $marks = null): array
+    {
+        $start = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+        $end = $start->copy()->endOfMonth();
+        $marks ??= $this->monthMarks($month);
+        $slots = $this->slotStarts();
+        $now = Carbon::now();
+        $free = [];
+
+        for ($day = $start->copy(); $day->lte($end); $day->addDay()) {
+            $iso = $day->toDateString();
+            $taken = $this->hoursFromMarks($marks[$iso] ?? []);
+            $count = 0;
+            foreach ($slots as $time) {
+                if (in_array($time, $taken, true)) {
+                    continue;
+                }
+                if (Carbon::parse($iso.' '.$time)->lt($now)) {
+                    continue;
+                }
+                $count++;
+            }
+            $free[$iso] = $count;
+        }
+
+        return $free;
+    }
+
+    private function hoursFromMarks(array $marks): array
+    {
+        $hours = [];
+        foreach ($marks as $mark) {
+            $start = substr((string) ($mark['start'] ?? ''), 0, 5);
+            $end = substr((string) ($mark['end'] ?? ''), 0, 5);
+            if ($start === '' || $end === '') {
+                continue;
+            }
+            $cursor = Carbon::createFromFormat('H:i', $start);
+            $close = Carbon::createFromFormat('H:i', $end);
+            while ($cursor->lt($close)) {
+                $hours[] = $cursor->format('H:i');
+                $cursor->addHour();
+            }
+        }
+
+        return array_values(array_unique($hours));
+    }
+
     private function coveredByLocal(array $marks, array $range): bool
     {
         foreach ($marks as $mark) {
