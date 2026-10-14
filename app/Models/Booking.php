@@ -64,6 +64,7 @@ class Booking extends Model
             'phone' => $this->phone,
             'address' => $this->address,
             'service_id' => $this->service_id,
+            'service_slug' => $this->relationLoaded('service') ? $this->service?->slug : null,
             'project_type' => $this->project_type,
             'event_title' => $this->event_title,
             'booking_date' => optional($this->booking_date)->toDateString(),

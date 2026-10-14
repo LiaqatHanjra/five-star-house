@@ -199,7 +199,10 @@ async function submit() {
         ...form,
       },
     })
-    router.push(`/pay/${data.booking.reference}`)
+    router.push({
+      path: `/pay/${data.booking.reference}`,
+      state: { returnTo: route.fullPath },
+    })
   } catch (e) {
     error.value = e.message
   } finally {

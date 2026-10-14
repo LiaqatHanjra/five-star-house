@@ -42,13 +42,44 @@ async function pay() {
     paying.value = false
   }
 }
+
+function fallbackPath() {
+  const kind = booking.value?.booking_kind
+  if (kind === 'service' && booking.value?.service_slug) {
+    return `/book/service/${booking.value.service_slug}`
+  }
+  return {
+    studio_event: '/book/studio-event',
+    owner_event: '/book/owner-event',
+    studio_time: '/book/studio-time',
+  }[kind] || '/book'
+}
+
+function isAppPath(path) {
+  return typeof path === 'string' && path.startsWith('/') && !path.startsWith('/pay')
+}
+
+function goBack() {
+  const previous = window.history.state?.back
+  if (isAppPath(previous)) {
+    router.back()
+    return
+  }
+  const returnTo = window.history.state?.returnTo
+  if (isAppPath(returnTo)) {
+    router.push(returnTo)
+    return
+  }
+  router.push(fallbackPath())
+}
 </script>
 
 <template>
   <section class="site-wrap py-xl py-lg-3xl">
-    <div class="max-w-xl">
-      <p class="type-overline text-uppercase ls-20 text-danger">{{ t('payment.kicker') }}</p>
-      <h1 class="type-headline-md text-uppercase mb-3">{{ t('payment.title') }}</h1>
+    <div class="max-w-xl d-flex flex-column align-items-start gap-3">
+      <button class="btn btn-secondary btn-quote" type="button" @click="goBack">{{ t('payment.back') }}</button>
+      <p class="type-overline text-uppercase ls-20 text-danger mb-0">{{ t('payment.kicker') }}</p>
+      <h1 class="type-headline-md text-uppercase mb-0">{{ t('payment.title') }}</h1>
       <p v-if="route.query.cancelled" class="type-body-md text-body-secondary">{{ t('payment.cancelled') }}</p>
       <p v-if="error" class="type-body-md text-danger">{{ error }}</p>
       <div v-if="booking" class="bg-dark p-4 d-flex flex-column gap-2">
@@ -73,9 +104,12 @@ async function pay() {
           </label>
         </div>
         <p class="type-body-sm text-body-tertiary mb-0">{{ t('payment.cardNote') }}</p>
-        <button class="btn btn-danger btn-pad align-self-start" :disabled="paying || !method || payment?.status === 'paid'" type="button" @click="pay">
-          {{ paying ? t('payment.processing') : t('payment.pay') }}
-        </button>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+          <button class="btn btn-danger btn-pad" :disabled="paying || !method || payment?.status === 'paid'" type="button" @click="pay">
+            {{ paying ? t('payment.processing') : t('payment.pay') }}
+          </button>
+          <button class="btn btn-secondary btn-pad" type="button" @click="goBack">{{ t('payment.cancel') }}</button>
+        </div>
       </div>
     </div>
   </section>

@@ -210,6 +210,8 @@ export default {
     paypalHint: 'Continue to PayPal to pay with your PayPal account.',
     processing: 'Processing...',
     pay: 'Pay and confirm',
+    back: 'Back',
+    cancel: 'Cancel',
   },
   success: {
     confirmedKicker: 'Confirmed',
