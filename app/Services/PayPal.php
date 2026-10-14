@@ -115,14 +115,14 @@ class PayPal
 
     private function request(): PendingRequest
     {
-        return Http::withOptions(['verify' => config('services.stripe.ca_bundle') ?: true])
+        return Http::withOptions(['verify' => true])
             ->acceptJson()
             ->withToken($this->token());
     }
 
     private function token(): string
     {
-        $response = Http::withOptions(['verify' => config('services.stripe.ca_bundle') ?: true])
+        $response = Http::withOptions(['verify' => true])
             ->acceptJson()
             ->withBasicAuth((string) config('services.paypal.client_id'), (string) config('services.paypal.secret'))
             ->asForm()
