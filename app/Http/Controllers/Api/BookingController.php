@@ -13,10 +13,14 @@ use App\Models\SiteSetting;
 use App\Services\GoogleCalendar;
 use App\Services\PayPal;
 use App\Support\BookingPageContent;
+use App\Support\CheckoutDraft;
 use App\Support\StudioSchedule;
 use Carbon\Carbon;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -158,55 +162,37 @@ class BookingController extends Controller
         $amount = $flat
             ? round($rate['hourly_rate'], 2)
             : round($rate['hourly_rate'] * $data['hours'], 2);
+        $service = ! empty($data['service_id'])
+            ? Service::query()->find($data['service_id'])
+            : null;
 
-        Customer::query()->updateOrCreate(
-            ['email' => $data['email']],
-            [
-                'name' => $data['full_name'],
-                'phone' => $data['phone'] ?? null,
-                'address' => $data['address'] ?? null,
-            ]
-        );
-
-        $booking = Booking::create([
+        $draft = [
             'reference' => $this->reference(),
+            'payment_reference' => $this->paymentReference(),
             'booking_kind' => $data['booking_kind'],
             'full_name' => $data['full_name'],
             'email' => $data['email'],
             'phone' => $data['phone'] ?? null,
             'address' => $data['address'] ?? null,
             'service_id' => $data['service_id'] ?? null,
+            'service_slug' => $service?->slug,
             'project_type' => $rate['label'],
             'event_title' => $data['event_title'] ?? null,
             'booking_date' => $data['booking_date'],
             'start_time' => $start->format('H:i:s'),
             'end_time' => $end->format('H:i:s'),
-            'hours' => $data['hours'],
+            'hours' => (int) $data['hours'],
             'charge_unit' => $flat ? $data['charge_unit'] : ($data['charge_unit'] ?? 'hour'),
             'hourly_rate' => $rate['hourly_rate'],
             'amount' => $amount,
-            'timeline' => $data['booking_date'],
-            'budget' => (string) $amount,
-            'message' => $data['message'] ?? '',
-            'status' => 'pending',
-        ]);
-
-        $payment = Payment::create([
-            'booking_id' => $booking->id,
-            'reference' => 'PAY-'.strtoupper(Str::random(8)),
-            'amount' => $amount,
             'currency' => $rate['currency'],
-            'status' => 'pending',
-            'method' => 'online',
-        ]);
+            'message' => $data['message'] ?? '',
+            'stripe_session_id' => null,
+            'paypal_order_id' => null,
+        ];
+        CheckoutDraft::put($draft);
 
-        $booking->load('payment');
-        $this->google->push($booking);
-
-        return response()->json([
-            'booking' => $booking->toPublicArray(),
-            'payment' => $payment->toPublicArray(),
-        ], 201);
+        return response()->json(CheckoutDraft::present($draft), 201);
     }
 
     public function inquire(Request $request)
@@ -253,12 +239,20 @@ class BookingController extends Controller
 
     public function show(string $reference)
     {
-        $booking = Booking::query()->with(['payment', 'service'])->where('reference', $reference)->firstOrFail();
+        $booking = Booking::query()->with(['payment', 'service'])->where('reference', $reference)->first();
+        if ($booking) {
+            return response()->json([
+                'booking' => $booking->toPublicArray(),
+                'payment' => $booking->payment?->toPublicArray(),
+            ]);
+        }
 
-        return response()->json([
-            'booking' => $booking->toPublicArray(),
-            'payment' => $booking->payment?->toPublicArray(),
-        ]);
+        $draft = CheckoutDraft::get($reference);
+        if (! $draft) {
+            return response()->json(['message' => 'This booking could not be found.'], 404);
+        }
+
+        return response()->json(CheckoutDraft::present($draft));
     }
 
     public function pay(Request $request, string $reference)
@@ -266,7 +260,17 @@ class BookingController extends Controller
         $data = $request->validate([
             'method' => ['required', Rule::in(['stripe', 'paypal'])],
         ]);
-        $booking = Booking::query()->with(['payment', 'service'])->where('reference', $reference)->firstOrFail();
+        $booking = Booking::query()->with(['payment', 'service'])->where('reference', $reference)->first();
+        if (! $booking) {
+            $draft = CheckoutDraft::get($reference);
+            if (! $draft) {
+                return response()->json(['message' => 'This booking could not be found.'], 404);
+            }
+
+            return $data['method'] === 'paypal'
+                ? $this->payDraftPaypal($draft)
+                : $this->payDraftStripe($draft);
+        }
         $payment = $booking->payment;
 
         if (! $payment) {
@@ -380,7 +384,10 @@ class BookingController extends Controller
             return $this->verifyPaypal($data['paypal_order'], $reference);
         }
 
-        $booking = Booking::query()->with(['payment', 'service'])->where('reference', $reference)->firstOrFail();
+        $booking = Booking::query()->with(['payment', 'service'])->where('reference', $reference)->first();
+        if (! $booking) {
+            return $this->verifyDraftStripe($reference, $data['session_id']);
+        }
         $payment = $booking->payment;
 
         if (! $payment || ! hash_equals((string) $payment->stripe_session_id, $data['session_id'])) {
@@ -473,6 +480,16 @@ class BookingController extends Controller
                     $this->markPaymentPaid($payment, $payment->booking);
                 }
             }
+
+            $reference = $session['metadata']['booking_reference'] ?? null;
+            if (is_string($reference) && $reference !== '' && ($session['payment_status'] ?? null) === 'paid') {
+                $draft = CheckoutDraft::get($reference);
+                if ($draft && $this->draftMatchesSession($session, $draft)) {
+                    $this->completeDraft($draft, 'stripe', [
+                        'stripe_session_id' => $session['id'] ?? $draft['stripe_session_id'],
+                    ]);
+                }
+            }
         }
 
         return response()->json(['received' => true]);
@@ -543,7 +560,10 @@ class BookingController extends Controller
 
     private function verifyPaypal(string $orderId, string $reference)
     {
-        $booking = Booking::query()->with(['payment', 'service'])->where('reference', $reference)->firstOrFail();
+        $booking = Booking::query()->with(['payment', 'service'])->where('reference', $reference)->first();
+        if (! $booking) {
+            return $this->verifyDraftPaypal($orderId, $reference);
+        }
         $payment = $booking->payment;
 
         if (! $payment || ! hash_equals((string) $payment->paypal_order_id, $orderId)) {
@@ -706,8 +726,365 @@ class BookingController extends Controller
     {
         do {
             $reference = 'FSH-'.strtoupper(Str::random(8));
-        } while (Booking::query()->where('reference', $reference)->exists());
+        } while (Booking::query()->where('reference', $reference)->exists() || CheckoutDraft::exists($reference));
 
         return $reference;
+    }
+
+    private function paymentReference(): string
+    {
+        do {
+            $reference = 'PAY-'.strtoupper(Str::random(8));
+        } while (Payment::query()->where('reference', $reference)->exists());
+
+        return $reference;
+    }
+
+    private function payDraftStripe(array $draft)
+    {
+        $secret = config('services.stripe.secret');
+        if (! $secret) {
+            return response()->json(['message' => 'Online payments are not configured. Please contact the studio.'], 503);
+        }
+
+        if (! empty($draft['stripe_session_id'])) {
+            try {
+                $existing = Http::withOptions(['verify' => true])
+                    ->withBasicAuth($secret, '')
+                    ->get('https://api.stripe.com/v1/checkout/sessions/'.$draft['stripe_session_id']);
+            } catch (ConnectionException $exception) {
+                report($exception);
+
+                return response()->json(['message' => 'Unable to connect to Stripe. Please try again.'], 502);
+            }
+
+            if ($existing->successful()) {
+                $session = $existing->json();
+                if (($session['payment_status'] ?? null) === 'paid' && $this->draftMatchesSession($session, $draft)) {
+                    $this->completeDraft($draft, 'stripe', ['stripe_session_id' => $session['id']]);
+
+                    return response()->json([
+                        'message' => 'Payment has already been received.',
+                        'paid' => true,
+                    ]);
+                }
+
+                if (($session['status'] ?? null) === 'open' && ! empty($session['url'])) {
+                    return response()->json(['checkout_url' => $session['url']]);
+                }
+            }
+        }
+
+        $baseUrl = rtrim(config('app.url'), '/');
+        try {
+            $response = Http::withOptions(['verify' => true])
+                ->withBasicAuth($secret, '')
+                ->asForm()
+                ->post('https://api.stripe.com/v1/checkout/sessions', [
+                    'mode' => 'payment',
+                    'success_url' => $baseUrl.'/booked/'.$draft['reference'].'?session_id={CHECKOUT_SESSION_ID}',
+                    'cancel_url' => $baseUrl.'/pay/'.$draft['reference'].'?cancelled=1',
+                    'customer_email' => $draft['email'],
+                    'client_reference_id' => $draft['payment_reference'],
+                    'metadata[booking_reference]' => $draft['reference'],
+                    'payment_intent_data[metadata][booking_reference]' => $draft['reference'],
+                    'line_items[0][price_data][currency]' => strtolower($draft['currency']),
+                    'line_items[0][price_data][product_data][name]' => $draft['project_type'],
+                    'line_items[0][price_data][unit_amount]' => (int) round((float) $draft['amount'] * 100),
+                    'line_items[0][quantity]' => 1,
+                ]);
+        } catch (ConnectionException $exception) {
+            report($exception);
+
+            return response()->json(['message' => 'Unable to connect to Stripe. Please try again.'], 502);
+        }
+
+        if (! $response->successful() || empty($response->json('id')) || empty($response->json('url'))) {
+            report(new RuntimeException('Stripe could not create a checkout session: '.$response->body()));
+
+            return response()->json(['message' => 'Unable to start Stripe checkout. Please try again.'], 502);
+        }
+
+        CheckoutDraft::merge($draft['reference'], ['stripe_session_id' => $response->json('id')]);
+
+        return response()->json([
+            'checkout_url' => $response->json('url'),
+        ]);
+    }
+
+    private function payDraftPaypal(array $draft)
+    {
+        if (! $this->paypal->configured()) {
+            return response()->json(['message' => 'PayPal is not configured. Please contact the studio.'], 503);
+        }
+
+        $payment = $this->draftPayment($draft);
+        $booking = $this->draftBooking($draft);
+
+        try {
+            if (! empty($draft['paypal_order_id'])) {
+                $payment->paypal_order_id = $draft['paypal_order_id'];
+                $existing = $this->paypal->order($draft['paypal_order_id']);
+                if ($this->paypal->isPaid($existing, $payment)) {
+                    $this->completeDraft($draft, 'paypal', ['paypal_order_id' => $draft['paypal_order_id']]);
+
+                    return response()->json([
+                        'message' => 'Payment has already been received.',
+                        'paid' => true,
+                    ]);
+                }
+
+                if (($existing['status'] ?? null) === 'APPROVED') {
+                    $captured = $this->paypal->capture($draft['paypal_order_id']);
+                    if ($this->paypal->isPaid($captured, $payment)) {
+                        $this->completeDraft($draft, 'paypal', ['paypal_order_id' => $draft['paypal_order_id']]);
+
+                        return response()->json([
+                            'message' => 'Payment has already been received.',
+                            'paid' => true,
+                        ]);
+                    }
+                }
+
+                $url = $this->paypal->approveUrl($existing);
+                if ($url && in_array($existing['status'] ?? null, ['CREATED', 'PAYER_ACTION_REQUIRED', 'SAVED'], true)) {
+                    return response()->json(['checkout_url' => $url]);
+                }
+            }
+
+            $created = $this->paypal->createOrder($payment, $booking);
+            CheckoutDraft::merge($draft['reference'], ['paypal_order_id' => $created['id']]);
+        } catch (ConnectionException $exception) {
+            report($exception);
+
+            return response()->json(['message' => 'Unable to connect to PayPal. Please try again.'], 502);
+        } catch (RuntimeException $exception) {
+            report($exception);
+
+            return response()->json(['message' => 'Unable to start PayPal checkout. Please try again.'], 502);
+        }
+
+        return response()->json([
+            'checkout_url' => $created['url'],
+        ]);
+    }
+
+    private function verifyDraftStripe(string $reference, string $sessionId)
+    {
+        $draft = CheckoutDraft::get($reference);
+        $booking = Booking::query()->with(['payment', 'service'])->where('reference', $reference)->first();
+        if ($booking?->payment?->status === 'paid') {
+            return response()->json([
+                'booking' => $booking->toPublicArray(),
+                'payment' => $booking->payment->toPublicArray(),
+            ]);
+        }
+
+        if (! $draft || empty($draft['stripe_session_id']) || ! hash_equals((string) $draft['stripe_session_id'], $sessionId)) {
+            return response()->json(['message' => 'This Stripe session does not match the booking.'], 403);
+        }
+
+        $secret = config('services.stripe.secret');
+        if (! $secret) {
+            return response()->json(['message' => 'Online payments are not configured. Please contact the studio.'], 503);
+        }
+
+        try {
+            $response = Http::withOptions(['verify' => config('services.stripe.ca_bundle') ?: true])
+                ->withBasicAuth($secret, '')
+                ->get('https://api.stripe.com/v1/checkout/sessions/'.$sessionId);
+        } catch (ConnectionException $exception) {
+            report($exception);
+
+            return response()->json(['message' => 'Unable to connect to Stripe. Please try again.'], 502);
+        }
+
+        if (! $response->successful()) {
+            report(new RuntimeException('Stripe could not verify checkout session '.$sessionId));
+
+            return response()->json(['message' => 'Unable to verify payment with Stripe. Please try again.'], 502);
+        }
+
+        $session = $response->json();
+        if (! $this->draftMatchesSession($session, $draft)) {
+            return response()->json(['message' => 'Stripe payment details do not match this booking.'], 422);
+        }
+
+        if (($session['payment_status'] ?? null) !== 'paid') {
+            return response()->json(CheckoutDraft::present($draft));
+        }
+
+        $booking = $this->completeDraft($draft, 'stripe', ['stripe_session_id' => $session['id']]);
+
+        return response()->json([
+            'booking' => $booking->toPublicArray(),
+            'payment' => $booking->payment?->toPublicArray(),
+        ]);
+    }
+
+    private function verifyDraftPaypal(string $orderId, string $reference)
+    {
+        $draft = CheckoutDraft::get($reference);
+        $booking = Booking::query()->with(['payment', 'service'])->where('reference', $reference)->first();
+        if ($booking?->payment?->status === 'paid') {
+            return response()->json([
+                'booking' => $booking->toPublicArray(),
+                'payment' => $booking->payment->toPublicArray(),
+            ]);
+        }
+
+        if (! $draft || empty($draft['paypal_order_id']) || ! hash_equals((string) $draft['paypal_order_id'], $orderId)) {
+            return response()->json(['message' => 'This PayPal order does not match the booking.'], 403);
+        }
+
+        if (! $this->paypal->configured()) {
+            return response()->json(['message' => 'PayPal is not configured. Please contact the studio.'], 503);
+        }
+
+        $payment = $this->draftPayment($draft);
+        $payment->paypal_order_id = $orderId;
+
+        try {
+            $order = $this->paypal->capture($orderId);
+        } catch (ConnectionException $exception) {
+            report($exception);
+
+            return response()->json(['message' => 'Unable to connect to PayPal. Please try again.'], 502);
+        } catch (RuntimeException $exception) {
+            report($exception);
+
+            return response()->json(['message' => 'Unable to verify payment with PayPal. Please try again.'], 502);
+        }
+
+        if (! $this->paypal->isPaid($order, $payment)) {
+            return response()->json(CheckoutDraft::present($draft));
+        }
+
+        $booking = $this->completeDraft($draft, 'paypal', ['paypal_order_id' => $orderId]);
+
+        return response()->json([
+            'booking' => $booking->toPublicArray(),
+            'payment' => $booking->payment?->toPublicArray(),
+        ]);
+    }
+
+    private function draftMatchesSession(array $session, array $draft): bool
+    {
+        return ($session['id'] ?? null) === ($draft['stripe_session_id'] ?? null)
+            && ($session['mode'] ?? null) === 'payment'
+            && ($session['metadata']['booking_reference'] ?? null) === $draft['reference']
+            && strtolower((string) ($session['currency'] ?? '')) === strtolower((string) $draft['currency'])
+            && (int) ($session['amount_total'] ?? 0) === (int) round((float) $draft['amount'] * 100);
+    }
+
+    private function draftBooking(array $draft): Booking
+    {
+        $booking = new Booking($draft);
+        $booking->reference = $draft['reference'];
+
+        return $booking;
+    }
+
+    private function draftPayment(array $draft): Payment
+    {
+        return new Payment([
+            'reference' => $draft['payment_reference'],
+            'amount' => $draft['amount'],
+            'currency' => $draft['currency'],
+            'status' => 'pending',
+            'method' => 'online',
+            'paypal_order_id' => $draft['paypal_order_id'] ?? null,
+            'stripe_session_id' => $draft['stripe_session_id'] ?? null,
+        ]);
+    }
+
+    private function completeDraft(array $draft, string $method, array $ids = []): Booking
+    {
+        $reference = $draft['reference'];
+
+        return Cache::lock('checkout-complete:'.$reference, 20)->block(10, function () use ($draft, $method, $ids, $reference) {
+            $existing = Booking::query()->with(['payment', 'service'])->where('reference', $reference)->first();
+            if ($existing) {
+                if ($existing->payment && $existing->payment->status !== 'paid') {
+                    $this->markPaymentPaid($existing->payment, $existing, $method);
+                    $existing->load(['payment', 'service']);
+                }
+
+                CheckoutDraft::forget($reference);
+
+                return $existing;
+            }
+
+            $saved = DB::transaction(function () use ($draft, $method, $ids) {
+                Customer::query()->updateOrCreate(
+                    ['email' => $draft['email']],
+                    [
+                        'name' => $draft['full_name'],
+                        'phone' => $draft['phone'] ?? null,
+                        'address' => $draft['address'] ?? null,
+                    ]
+                );
+
+                try {
+                    $booking = Booking::create([
+                        'reference' => $draft['reference'],
+                        'booking_kind' => $draft['booking_kind'],
+                        'full_name' => $draft['full_name'],
+                        'email' => $draft['email'],
+                        'phone' => $draft['phone'] ?? null,
+                        'address' => $draft['address'] ?? null,
+                        'service_id' => $draft['service_id'] ?? null,
+                        'project_type' => $draft['project_type'],
+                        'event_title' => $draft['event_title'] ?? null,
+                        'booking_date' => $draft['booking_date'],
+                        'start_time' => $draft['start_time'],
+                        'end_time' => $draft['end_time'],
+                        'hours' => $draft['hours'],
+                        'charge_unit' => $draft['charge_unit'] ?? 'hour',
+                        'hourly_rate' => $draft['hourly_rate'],
+                        'amount' => $draft['amount'],
+                        'timeline' => $draft['booking_date'],
+                        'budget' => (string) $draft['amount'],
+                        'message' => $draft['message'] ?? '',
+                        'status' => 'confirmed',
+                    ]);
+                } catch (UniqueConstraintViolationException) {
+                    return Booking::query()->where('reference', $draft['reference'])->first();
+                }
+
+                Payment::create([
+                    'booking_id' => $booking->id,
+                    'reference' => $draft['payment_reference'],
+                    'amount' => $draft['amount'],
+                    'currency' => $draft['currency'],
+                    'status' => 'paid',
+                    'method' => $method,
+                    'stripe_session_id' => $ids['stripe_session_id'] ?? $draft['stripe_session_id'] ?? null,
+                    'paypal_order_id' => $ids['paypal_order_id'] ?? $draft['paypal_order_id'] ?? null,
+                    'paid_at' => now(),
+                ]);
+
+                return $booking;
+            });
+
+            CheckoutDraft::forget($reference);
+            if (! $saved) {
+                $saved = Booking::query()->with(['payment', 'service'])->where('reference', $reference)->firstOrFail();
+            }
+
+            $created = $saved->wasRecentlyCreated;
+            $saved->load(['payment', 'service']);
+            if ($created) {
+                $this->google->push($saved);
+
+                try {
+                    $this->notify($saved);
+                } catch (\Throwable $exception) {
+                    report($exception);
+                }
+            }
+
+            return $saved;
+        });
     }
 }

@@ -53,6 +53,7 @@ class StudioSchedule
         return array_values(array_unique(array_merge(
             $this->hoursCovered($this->blockingBookings($date), $date),
             $this->google->busyHours($date),
+            CheckoutDraft::hoursOn($date),
         )));
     }
 
@@ -74,6 +75,15 @@ class StudioSchedule
                 foreach ($ranges as $range) {
                     if ($time >= $range['start'] && $time < $range['end']) {
                         $covering[] = $this->busyMark($date, $range);
+                        break;
+                    }
+                }
+            }
+
+            if ($covering === []) {
+                foreach (CheckoutDraft::marksOn($date) as $mark) {
+                    if ($time >= $mark['start'] && $time < $mark['end']) {
+                        $covering[] = $mark;
                         break;
                     }
                 }
@@ -109,6 +119,15 @@ class StudioSchedule
                     continue;
                 }
                 $marks[$date][] = $this->busyMark($date, $range);
+            }
+        }
+
+        foreach (CheckoutDraft::marksForMonth($month) as $date => $held) {
+            foreach ($held as $mark) {
+                if ($this->coveredByLocal($marks[$date] ?? [], $mark)) {
+                    continue;
+                }
+                $marks[$date][] = $mark;
             }
         }
 

@@ -32,7 +32,7 @@ class PayPal
             'intent' => 'CAPTURE',
             'purchase_units' => [[
                 'reference_id' => $payment->reference,
-                'custom_id' => (string) $payment->id,
+                'custom_id' => (string) ($payment->id ?: $payment->reference),
                 'description' => mb_substr((string) $booking->project_type, 0, 127),
                 'amount' => [
                     'currency_code' => strtoupper($payment->currency),
@@ -101,7 +101,7 @@ class PayPal
         }
 
         $unit = $order['purchase_units'][0] ?? [];
-        if ((string) ($unit['custom_id'] ?? '') !== (string) $payment->id) {
+        if ((string) ($unit['custom_id'] ?? '') !== (string) ($payment->id ?: $payment->reference)) {
             return false;
         }
 
