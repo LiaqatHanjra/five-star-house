@@ -14,6 +14,7 @@ const error = ref('')
 const result = ref(null)
 const showStudio = ref('')
 const studioPanel = ref(null)
+const ready = ref(false)
 
 function fillCopy(text, hours) {
   return String(text || '')
@@ -55,6 +56,28 @@ const form = reactive({
 })
 
 const page = computed(() => content.value?.[locale.value] || {})
+
+const heroCopy = computed(() => {
+  if (!ready.value) return { kicker: '', title: '', lead: '', label: '', caption: '' }
+  return {
+    kicker: page.value.kicker || t('book.kicker'),
+    title: page.value.title || t('book.title'),
+    lead: page.value.lead || t('book.lead'),
+    label: sidebar.value?.category || t('services.stageFallback'),
+    caption: sidebar.value?.title || t('book.city'),
+  }
+})
+
+const bannerCopy = computed(() => {
+  if (!ready.value) return { kicker: '', title: '', lead: '', label: '', caption: '' }
+  return {
+    kicker: banner.value?.category || t('footer.tagline'),
+    title: banner.value?.title || 'Five Star House',
+    lead: banner.value?.caption || t('book.city'),
+    label: banner.value?.category || t('services.stageFallback'),
+    caption: banner.value?.title || t('book.city'),
+  }
+})
 
 const socials = computed(() => [
   { icon: 'instagram', label: t('book.instagram'), href: settings.value.instagram_url },
@@ -98,15 +121,19 @@ async function submit() {
 }
 
 onMounted(async () => {
-  const [studio, booking] = await Promise.all([
-    api('/api/studio'),
-    api('/api/booking'),
-  ])
-  settings.value = studio.settings || {}
-  content.value = studio.content || null
-  sidebar.value = booking.sidebar || null
-  banner.value = booking.banner || null
-  services.value = booking.services || []
+  try {
+    const [studio, booking] = await Promise.all([
+      api('/api/studio'),
+      api('/api/booking'),
+    ])
+    settings.value = studio.settings || {}
+    content.value = studio.content || null
+    sidebar.value = booking.sidebar || null
+    banner.value = booking.banner || null
+    services.value = booking.services || []
+  } finally {
+    ready.value = true
+  }
 })
 </script>
 
@@ -118,18 +145,18 @@ onMounted(async () => {
           <div class="col-lg-6 page-banner-copy">
             <div class="d-flex align-items-center gap-1">
               <span class="sq-2 bg-danger d-inline-block" aria-hidden="true"></span>
-              <span class="type-overline text-uppercase ls-25 text-danger">{{ page.kicker || t('book.kicker') }}</span>
+              <span class="type-overline text-uppercase ls-25 text-danger">{{ heroCopy.kicker }}</span>
             </div>
-            <h1 class="page-banner-title">{{ page.title || t('book.title') }}</h1>
-            <p class="page-banner-lead text-body-secondary">{{ page.lead || t('book.lead') }}</p>
+            <h1 class="page-banner-title">{{ heroCopy.title }}</h1>
+            <p class="page-banner-lead text-body-secondary">{{ heroCopy.lead }}</p>
           </div>
           <div class="col-lg-6">
             <div class="zoom-frame zoom-slow page-banner-media position-relative bg-body-secondary overflow-hidden shadow-2xl">
               <div v-if="sidebar?.image_url" class="media-cover w-100 h-100" :style="{ backgroundImage: `url('${sidebar.image_url}')` }"></div>
               <div class="overlay-fade position-absolute top-0 start-0 end-0 bottom-0 opacity-80"></div>
               <div class="position-absolute bottom-0 start-0 end-0 m-3 d-flex align-items-center justify-content-between text-body-secondary type-label-sm">
-                <span class="bg-dark bg-opacity-80 px-2 py-1 text-uppercase ls-widest text-fixed">{{ sidebar?.category || t('services.stageFallback') }}</span>
-                <span class="text-uppercase text-body-tertiary ls-wider d-none d-sm-inline-block">{{ sidebar?.title || t('book.city') }}</span>
+                <span class="bg-dark bg-opacity-80 px-2 py-1 text-uppercase ls-widest text-fixed">{{ heroCopy.label }}</span>
+                <span class="text-uppercase text-body-tertiary ls-wider d-none d-sm-inline-block">{{ heroCopy.caption }}</span>
               </div>
             </div>
           </div>
@@ -243,18 +270,18 @@ onMounted(async () => {
           <div class="col-lg-6 page-banner-copy">
             <div class="d-flex align-items-center gap-1">
               <span class="sq-2 bg-danger d-inline-block" aria-hidden="true"></span>
-              <span class="type-overline text-uppercase ls-25 text-danger">{{ banner?.category || t('footer.tagline') }}</span>
+              <span class="type-overline text-uppercase ls-25 text-danger">{{ bannerCopy.kicker }}</span>
             </div>
-            <h2 class="page-banner-title">{{ banner?.title || 'Five Star House' }}</h2>
-            <p class="page-banner-lead text-body-secondary">{{ banner?.caption || t('book.city') }}</p>
+            <h2 class="page-banner-title">{{ bannerCopy.title }}</h2>
+            <p class="page-banner-lead text-body-secondary">{{ bannerCopy.lead }}</p>
           </div>
           <div class="col-lg-6">
             <div class="zoom-frame zoom-slow page-banner-media position-relative bg-body-secondary overflow-hidden shadow-2xl">
               <div v-if="banner?.image_url" class="media-cover w-100 h-100" :style="{ backgroundImage: `url('${banner.image_url}')` }"></div>
               <div class="overlay-fade position-absolute top-0 start-0 end-0 bottom-0 opacity-80"></div>
               <div class="position-absolute bottom-0 start-0 end-0 m-3 d-flex align-items-center justify-content-between text-body-secondary type-label-sm">
-                <span class="bg-dark bg-opacity-80 px-2 py-1 text-uppercase ls-widest text-fixed">{{ banner?.category || t('services.stageFallback') }}</span>
-                <span class="text-uppercase text-body-tertiary ls-wider d-none d-sm-inline-block">{{ banner?.title || t('book.city') }}</span>
+                <span class="bg-dark bg-opacity-80 px-2 py-1 text-uppercase ls-widest text-fixed">{{ bannerCopy.label }}</span>
+                <span class="text-uppercase text-body-tertiary ls-wider d-none d-sm-inline-block">{{ bannerCopy.caption }}</span>
               </div>
             </div>
           </div>
