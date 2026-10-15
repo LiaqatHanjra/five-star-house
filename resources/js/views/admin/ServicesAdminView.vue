@@ -41,11 +41,10 @@ const emptyService = () => ({
   eyebrow: '',
   badge: '',
   charge: 0,
-  day_charge: 0,
-  project_charge: 0,
   currency: 'CAD',
   charge_unit: 'hour',
   minimum_hours: 1,
+  enforce_minimum: true,
   image_url: '',
   tags: '',
   cta_label: 'REQUEST QUOTE',
@@ -58,8 +57,13 @@ const form = reactive(emptyService())
 const preview = computed(() => (file.value ? URL.createObjectURL(file.value) : form.image_url))
 
 function priceLine(service) {
-  const money = (amount) => formatMoney(amount, service.currency)
-  return `${money(service.charge)} / hour · ${money(service.day_charge)} / day · ${money(service.project_charge)} / project`
+  const units = {
+    hour: '/ hour',
+    day: '/ day',
+    project: '/ project',
+    session: '/ session',
+  }
+  return `${formatMoney(service.charge, service.currency)} ${units[service.charge_unit] || '/ hour'}`
 }
 
 function fillBanner(image) {
@@ -83,8 +87,7 @@ function fillService(service) {
     ...service,
     tags: (service.tags || []).join(', '),
     charge: Number(service.charge),
-    day_charge: Number(service.day_charge || 0),
-    project_charge: Number(service.project_charge || 0),
+    enforce_minimum: service.enforce_minimum !== false,
   })
 }
 
@@ -160,7 +163,7 @@ function onFile(event) {
 function servicePayload() {
   const body = new FormData()
   Object.entries(form).forEach(([key, value]) => {
-    body.append(key, key === 'is_active' ? (value ? '1' : '0') : (value ?? ''))
+    body.append(key, key === 'is_active' || key === 'enforce_minimum' ? (value ? '1' : '0') : (value ?? ''))
   })
   if (file.value) body.append('image', file.value)
   return body
@@ -304,25 +307,31 @@ onMounted(load)
             <label class="type-label-sm text-uppercase">Slug</label>
             <input v-model="form.slug" class="form-control" placeholder="auto from title">
           </div>
-          <div class="col-md-4 d-flex flex-column gap-1">
-            <label class="type-label-sm text-uppercase">Price per hour</label>
+          <div class="col-md-3 d-flex flex-column gap-1">
+            <label class="type-label-sm text-uppercase">Price</label>
             <input v-model="form.charge" class="form-control" min="0" required step="0.01" type="number">
           </div>
-          <div class="col-md-4 d-flex flex-column gap-1">
-            <label class="type-label-sm text-uppercase">Price per day</label>
-            <input v-model="form.day_charge" class="form-control" min="0" required step="0.01" type="number">
-          </div>
-          <div class="col-md-4 d-flex flex-column gap-1">
-            <label class="type-label-sm text-uppercase">Price per project</label>
-            <input v-model="form.project_charge" class="form-control" min="0" required step="0.01" type="number">
+          <div class="col-md-3 d-flex flex-column gap-1">
+            <label class="type-label-sm text-uppercase">Charged</label>
+            <select v-model="form.charge_unit" class="form-select" required>
+              <option value="project">Per project</option>
+              <option value="hour">Per hour</option>
+              <option value="day">Per day</option>
+              <option value="session">Per session</option>
+            </select>
           </div>
           <div class="col-md-2 d-flex flex-column gap-1">
             <label class="type-label-sm text-uppercase">Currency</label>
             <input v-model="form.currency" class="form-control" maxlength="3" required>
           </div>
-          <div class="col-md-3 d-flex flex-column gap-1">
+          <div class="col-md-4 d-flex flex-column gap-1">
             <label class="type-label-sm text-uppercase">Minimum hours</label>
-            <input v-model.number="form.minimum_hours" class="form-control" min="1" max="12" type="number">
+            <div class="d-flex align-items-center gap-2">
+              <input v-model.number="form.minimum_hours" class="form-control" :disabled="!form.enforce_minimum" min="1" max="12" type="number">
+              <button class="min-switch" :class="{ on: form.enforce_minimum }" type="button" :aria-pressed="form.enforce_minimum ? 'true' : 'false'" aria-label="Minimum hours" @click="form.enforce_minimum = !form.enforce_minimum">
+                <span></span>
+              </button>
+            </div>
           </div>
           <div class="col-md-3 d-flex flex-column gap-1">
             <label class="type-label-sm text-uppercase">Status</label>

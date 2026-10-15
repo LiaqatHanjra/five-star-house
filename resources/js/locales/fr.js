@@ -38,6 +38,7 @@ export default {
     perHour: ' / heure',
     perDay: ' / jour',
     perProject: ' / projet',
+    perSession: ' / séance',
     sqft: 'PI²',
     ft: 'PI',
   },
@@ -144,6 +145,8 @@ export default {
     perHour: 'À l’heure',
     perProject: 'Par projet',
     perDay: 'À la journée',
+    perSession: 'Par séance',
+    minimumHours: 'Heures minimum',
   },
   book: {
     kicker: 'Réserver un projet',
@@ -192,6 +195,10 @@ export default {
     quote: {
       one: '{rate} / heure · {total} pour {n} heure',
       other: '{rate} / heure · {total} pour {n} heures',
+    },
+    sessionQuote: {
+      one: '{rate} / séance · {total} pour {n} heure',
+      other: '{rate} / séance · {total} pour {n} heures',
     },
     bookedHint: 'Survolez une date rouge pour voir s’il reste des heures.',
     slotAvailable: {

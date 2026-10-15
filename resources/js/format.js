@@ -11,6 +11,8 @@ export function formatCharge(service) {
 
   if (service.charge_unit === 'hour') return `${formatted}${t('units.perHour')}`
   if (service.charge_unit === 'day') return `${formatted}${t('units.perDay')}`
+  if (service.charge_unit === 'session') return `${formatted}${t('units.perSession')}`
+  if (service.charge_unit === 'project') return `${formatted}${t('units.perProject')}`
   return formatted
 }
 

@@ -144,7 +144,7 @@ onMounted(async () => {
             <span class="type-headline-sm fw-bold text-danger d-block mb-2">{{ service.number }}</span>
             <h3 class="type-headline-sm text-uppercase hover-accent mb-1">{{ service.title }}</h3>
             <p class="type-body-md text-body-secondary mb-3">{{ service.summary }}</p>
-            <p class="type-label-sm text-uppercase ls-wider text-primary mb-3">{{ formatCharge(service) }} · {{ t('home.hourMin', { n: service.minimum_hours || 1 }) }}</p>
+            <p class="type-label-sm text-uppercase ls-wider text-primary mb-3">{{ formatCharge(service) }}<template v-if="service.enforce_minimum !== false"> · {{ t('home.hourMin', { n: service.minimum_hours || 1 }) }}</template></p>
           </div>
           <RouterLink class="d-flex align-items-center gap-1 type-label-sm text-uppercase ls-wider text-body-tertiary hover-body" :to="`/services/${service.slug}`">
             <span>{{ t('home.viewService') }}</span>

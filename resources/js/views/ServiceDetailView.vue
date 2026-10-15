@@ -11,20 +11,19 @@ const route = useRoute()
 const service = ref(null)
 const failed = ref(false)
 const billingUnit = ref('')
+const applyMinimum = ref(true)
 
 const minimum = computed(() => service.value?.minimum_hours || 1)
 const error = computed(() => (failed.value ? t('detail.missing') : ''))
 const priceLabel = computed(() => {
-  if (!service.value || !billingUnit.value) return formatCharge(service.value)
-  const amount = billingUnit.value === 'day'
-    ? service.value.day_charge
-    : billingUnit.value === 'project'
-      ? service.value.project_charge
-      : service.value.charge
-  const formatted = formatMoney(amount, service.value.currency)
-  if (billingUnit.value === 'hour') return `${formatted}${t('units.perHour')}`
-  if (billingUnit.value === 'day') return `${formatted}${t('units.perDay')}`
-  return `${formatted}${t('units.perProject')}`
+  if (!service.value) return ''
+  const formatted = formatMoney(service.value.charge, service.value.currency)
+  const unit = billingUnit.value || service.value.charge_unit
+  if (unit === 'hour') return `${formatted}${t('units.perHour')}`
+  if (unit === 'day') return `${formatted}${t('units.perDay')}`
+  if (unit === 'session') return `${formatted}${t('units.perSession')}`
+  if (unit === 'project') return `${formatted}${t('units.perProject')}`
+  return formatCharge(service.value)
 })
 
 watch(service, (value) => {
@@ -66,13 +65,13 @@ onMounted(async () => {
         <h1 class="type-headline-md type-md-headline-lg text-uppercase">{{ service.title }}</h1>
         <p class="type-body-lg text-body-secondary">{{ service.description }}</p>
         <p class="type-headline-sm text-uppercase text-primary">{{ priceLabel }}</p>
-        <p class="type-body-md text-body-secondary mb-0">{{ tp('detail.minimum', minimum) }}</p>
+        <p v-if="service.enforce_minimum !== false && applyMinimum" class="type-body-md text-body-secondary mb-0">{{ tp('detail.minimum', minimum) }}</p>
         <div class="d-flex flex-wrap gap-2">
           <span v-for="tag in service.tags" :key="tag" class="bg-secondary px-12 py-1 type-label-sm text-uppercase ls-wider">{{ tag }}</span>
         </div>
       </div>
     </div>
-    <BookWizardView embedded @unit-change="billingUnit = $event" />
+    <BookWizardView embedded @unit-change="billingUnit = $event" @minimum-change="applyMinimum = $event" />
   </section>
   <section v-else class="site-wrap py-3xl">
     <p class="type-body-md text-danger">{{ error || t('detail.loading') }}</p>

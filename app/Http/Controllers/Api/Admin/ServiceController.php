@@ -62,11 +62,10 @@ class ServiceController extends Controller
             'eyebrow' => ['nullable', 'string', 'max:160'],
             'badge' => ['nullable', 'string', 'max:160'],
             'charge' => ['required', 'numeric', 'min:0', 'max:999999.99'],
-            'day_charge' => ['required', 'numeric', 'min:0', 'max:999999.99'],
-            'project_charge' => ['required', 'numeric', 'min:0', 'max:999999.99'],
             'currency' => ['required', 'string', 'size:3'],
-            'charge_unit' => ['required', Rule::in(['hour', 'project', 'day'])],
+            'charge_unit' => ['required', Rule::in(['hour', 'project', 'day', 'session'])],
             'minimum_hours' => ['nullable', 'integer', 'min:1', 'max:12'],
+            'enforce_minimum' => ['nullable'],
             'image_url' => ['nullable', 'string', 'max:2048'],
             'tags' => ['nullable', 'string', 'max:1000'],
             'cta_label' => ['required', 'string', 'max:80'],
@@ -91,6 +90,7 @@ class ServiceController extends Controller
         $data['sort_order'] = $data['sort_order'] ?? 0;
         $data['is_active'] = $request->boolean('is_active', $service === null);
         $data['currency'] = strtoupper($data['currency']);
+        $data['enforce_minimum'] = $request->boolean('enforce_minimum');
         $data['minimum_hours'] = $data['minimum_hours'] ?? 1;
         unset($data['image']);
 

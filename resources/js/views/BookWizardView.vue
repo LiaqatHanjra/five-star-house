@@ -10,7 +10,7 @@ const props = defineProps({
   embedded: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['unit-change'])
+const emit = defineEmits(['unit-change', 'minimum-change'])
 
 const route = useRoute()
 const router = useRouter()
@@ -58,8 +58,13 @@ const title = computed(() => {
 
 const needsEvent = computed(() => kind.value === 'studio_event' || kind.value === 'owner_event')
 const isService = computed(() => kind.value === 'service')
-const byHour = computed(() => !isService.value || selectedUnit.value === 'hour')
+const byHour = computed(() => !isService.value || selectedUnit.value !== '')
 const showCalendar = computed(() => !isService.value || selectedUnit.value !== '')
+const useMinimum = ref(true)
+const bookingMinimum = computed(() => {
+  if (isService.value && !useMinimum.value) return 1
+  return service.value?.minimum_hours || windowInfo.value.minimum_hours || 1
+})
 const backTo = computed(() => (route.params.slug && !props.embedded ? `/services/${route.params.slug}` : '/book'))
 const monthKey = computed(() => `${cursor.value.getFullYear()}-${String(cursor.value.getMonth() + 1).padStart(2, '0')}`)
 const monthLabel = computed(() => cursor.value.toLocaleDateString(dateLocale(), { month: 'long', year: 'numeric' }))
@@ -120,28 +125,26 @@ const weeks = computed(() => {
 const rateNote = computed(() => {
   if (!quote.value) return ''
   const min = quote.value.minimum_hours || windowInfo.value.minimum_hours || 1
-  if (isService.value && (selectedUnit.value === 'day' || selectedUnit.value === 'project')) return quoteLine.value
   return tp('calendar.rate', min, {
     rate: formatMoney(quote.value.hourly_rate, quote.value.currency),
   })
 })
 
 const maxHours = computed(() => {
-  if (!startTime.value) return windowInfo.value.minimum_hours || 1
+  const floor = bookingMinimum.value
+  if (!startTime.value) return floor
   const index = slots.value.findIndex((slot) => slot.time === startTime.value)
   let count = 0
   for (let i = index; i < slots.value.length; i += 1) {
     if (slots.value[i].booked) break
     count += 1
   }
-  return Math.max(count, windowInfo.value.minimum_hours || 1)
+  return Math.max(count, floor)
 })
 
 const quoteLine = computed(() => {
   if (!quote.value) return ''
   const total = formatMoney(quote.value.amount, quote.value.currency)
-  if (isService.value && selectedUnit.value === 'day') return t('wizard.dayQuote', { total })
-  if (isService.value && selectedUnit.value === 'project') return t('wizard.projectQuote', { total })
   return tp('wizard.quote', hours.value, {
     rate: formatMoney(quote.value.hourly_rate, quote.value.currency),
     total,
@@ -149,7 +152,7 @@ const quoteLine = computed(() => {
 })
 
 const hourChoices = computed(() => {
-  const min = service.value?.minimum_hours || windowInfo.value.minimum_hours || 1
+  const min = bookingMinimum.value
   const list = []
   for (let value = min; value <= maxHours.value; value += 1) list.push(value)
   return list.length ? list : [min]
@@ -165,6 +168,7 @@ async function loadMonth() {
     booking_kind: kind.value,
   })
   if (service.value?.id) params.set('service_id', service.value.id)
+  if (isService.value) params.set('apply_minimum', useMinimum.value ? '1' : '0')
   const data = await api(`/api/availability?${params}`)
   windowInfo.value = data.window
   marks.value = data.marks || {}
@@ -181,6 +185,7 @@ async function selectDate(day) {
     booking_kind: kind.value,
   })
   if (service.value?.id) params.set('service_id', service.value.id)
+  if (isService.value) params.set('apply_minimum', useMinimum.value ? '1' : '0')
   const data = await api(`/api/availability?${params}`)
   slots.value = data.slots || []
   windowInfo.value = data.window
@@ -196,8 +201,7 @@ async function selectDate(day) {
 function pickStart(slot) {
   if (!slot.can_start) return
   startTime.value = slot.time
-  const min = service.value?.minimum_hours || windowInfo.value.minimum_hours || 1
-  hours.value = min
+  hours.value = bookingMinimum.value
 }
 
 async function refreshQuote() {
@@ -213,8 +217,9 @@ async function refreshQuote() {
     body: {
       booking_kind: kind.value,
       service_id: service.value?.id || null,
-      hours: unit === 'hour' ? hours.value : 1,
+      hours: hours.value,
       charge_unit: unit,
+      apply_minimum: !isService.value || useMinimum.value,
     },
   })
 }
@@ -232,6 +237,7 @@ async function submit() {
         start_time: byHour.value ? startTime.value : windowInfo.value.open,
         hours: byHour.value ? hours.value : 1,
         charge_unit: isService.value ? selectedUnit.value : 'hour',
+        apply_minimum: !isService.value || useMinimum.value,
         ...form,
       },
     })
@@ -247,6 +253,23 @@ async function submit() {
 }
 
 watch(hours, refreshQuote)
+watch(useMinimum, async (on) => {
+  emit('minimum-change', on)
+  const min = on ? (service.value?.minimum_hours || windowInfo.value.minimum_hours || 1) : 1
+  if (hours.value < min) hours.value = min
+  if (selectedDate.value) {
+    const params = new URLSearchParams({
+      date: selectedDate.value,
+      booking_kind: kind.value,
+    })
+    if (service.value?.id) params.set('service_id', service.value.id)
+    params.set('apply_minimum', on ? '1' : '0')
+    const data = await api(`/api/availability?${params}`)
+    slots.value = data.slots || []
+    windowInfo.value = data.window
+  }
+  refreshQuote()
+})
 watch(selectedUnit, () => {
   selectedDate.value = ''
   startTime.value = ''
@@ -276,7 +299,8 @@ onMounted(async () => {
   if (route.params.slug) {
     const data = await api(`/api/services/${route.params.slug}`)
     service.value = data.service
-    hours.value = data.service.minimum_hours || 1
+    useMinimum.value = data.service.enforce_minimum !== false
+    hours.value = useMinimum.value ? (data.service.minimum_hours || 1) : 1
   }
   await loadMonth()
   if (!service.value) hours.value = windowInfo.value.minimum_hours || 1
@@ -290,18 +314,27 @@ onMounted(async () => {
       <RouterLink class="btn btn-secondary btn-quote" :to="backTo">{{ t('wizard.back') }}</RouterLink>
       <div>
         <h1 class="type-headline-md text-uppercase">{{ title }}</h1>
-        <p class="type-overline text-uppercase ls-20 text-danger mb-0">{{ tp('wizard.minimum', service?.minimum_hours || windowInfo.minimum_hours || 1) }}</p>
+        <p v-if="!isService || useMinimum" class="type-overline text-uppercase ls-20 text-danger mb-0">{{ tp('wizard.minimum', bookingMinimum) }}</p>
         <p v-if="quoteLine" class="type-body-md text-primary mb-0">{{ quoteLine }}</p>
       </div>
     </div>
-    <div v-if="isService" class="d-flex flex-column gap-1" :class="{ 'mt-5 pt-lg-3': embedded }">
-      <label class="type-label-sm text-uppercase" for="service-rate">{{ t('detail.rate') }}</label>
-      <select id="service-rate" v-model="selectedUnit" class="form-select">
-        <option value="">{{ t('detail.chooseRate') }}</option>
-        <option value="hour">{{ t('detail.perHour') }}</option>
-        <option value="day">{{ t('detail.perDay') }}</option>
-        <option value="project">{{ t('detail.perProject') }}</option>
-      </select>
+    <div v-if="isService" class="d-flex flex-wrap align-items-end gap-3" :class="{ 'mt-5 pt-lg-3': embedded }">
+      <div class="d-flex flex-column gap-1 flex-grow-1">
+        <label class="type-label-sm text-uppercase" for="service-rate">{{ t('detail.rate') }}</label>
+        <select id="service-rate" v-model="selectedUnit" class="form-select">
+          <option value="">{{ t('detail.chooseRate') }}</option>
+          <option value="hour">{{ t('detail.perHour') }}</option>
+          <option value="day">{{ t('detail.perDay') }}</option>
+          <option value="project">{{ t('detail.perProject') }}</option>
+          <option value="session">{{ t('detail.perSession') }}</option>
+        </select>
+      </div>
+      <div class="d-flex align-items-center gap-2 pb-1">
+        <span class="type-label-sm text-uppercase">{{ t('detail.minimumHours') }}</span>
+        <button class="min-switch" :class="{ on: useMinimum }" type="button" :aria-pressed="useMinimum ? 'true' : 'false'" :aria-label="t('detail.minimumHours')" @click="useMinimum = !useMinimum">
+          <span></span>
+        </button>
+      </div>
     </div>
     <p v-if="embedded && quoteLine" class="type-body-md text-primary mb-0">{{ quoteLine }}</p>
 

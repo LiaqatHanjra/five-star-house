@@ -38,6 +38,7 @@ export default {
     perHour: ' / hour',
     perDay: ' / day',
     perProject: ' / project',
+    perSession: ' / session',
     sqft: 'SQFT',
     ft: 'FT',
   },
@@ -144,6 +145,8 @@ export default {
     perHour: 'Per hour',
     perProject: 'Per project',
     perDay: 'Per day',
+    perSession: 'Per session',
+    minimumHours: 'Minimum hours',
   },
   book: {
     kicker: 'Book a project',
@@ -192,6 +195,10 @@ export default {
     quote: {
       one: '{rate} / hour · {total} for {n} hour',
       other: '{rate} / hour · {total} for {n} hours',
+    },
+    sessionQuote: {
+      one: '{rate} / session · {total} for {n} hour',
+      other: '{rate} / session · {total} for {n} hours',
     },
     bookedHint: 'Hover a red date to see if any hours are still open.',
     slotAvailable: {

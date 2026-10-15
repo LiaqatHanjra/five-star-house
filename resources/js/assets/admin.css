@@ -218,6 +218,36 @@
   text-underline-offset: .2rem;
 }
 
+.min-switch {
+  width: 2.6rem;
+  height: 1.45rem;
+  border: 0;
+  border-radius: 999px;
+  background: #3a3a3a;
+  padding: .15rem;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  cursor: pointer;
+}
+
+.min-switch span {
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 50%;
+  background: #fff;
+  display: block;
+  transition: transform .15s ease;
+}
+
+.min-switch.on {
+  background: #e10600;
+}
+
+.min-switch.on span {
+  transform: translateX(1.15rem);
+}
+
 @media (max-width: 991.98px) {
   .admin-shell { grid-template-columns: 1fr; }
   .admin-side { position: static; height: auto; }

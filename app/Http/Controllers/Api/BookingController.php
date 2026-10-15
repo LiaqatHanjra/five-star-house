@@ -59,11 +59,12 @@ class BookingController extends Controller
             'date' => ['nullable', 'date'],
             'booking_kind' => ['nullable', Rule::in(['service', 'studio_time', 'studio_event', 'owner_event'])],
             'service_id' => ['required_if:booking_kind,service', 'nullable', 'integer', 'exists:services,id'],
+            'apply_minimum' => ['nullable', 'boolean'],
         ]);
 
         $window = $this->schedule->window();
         $minimumHours = isset($data['booking_kind'])
-            ? $this->rateFor($data['booking_kind'], isset($data['service_id']) ? (int) $data['service_id'] : null)['minimum_hours']
+            ? $this->rateFor($data['booking_kind'], isset($data['service_id']) ? (int) $data['service_id'] : null, 'hour', $this->minimumChoice($request))['minimum_hours']
             : $window['minimum_hours'];
         $window['minimum_hours'] = $minimumHours;
         $payload = ['window' => $window];
@@ -87,27 +88,25 @@ class BookingController extends Controller
             'booking_kind' => ['required', Rule::in(['service', 'studio_time', 'studio_event', 'owner_event'])],
             'service_id' => ['required_if:booking_kind,service', 'nullable', 'integer', 'exists:services,id'],
             'hours' => ['required', 'integer', 'min:1', 'max:12'],
-            'charge_unit' => ['nullable', Rule::in(['hour', 'day', 'project'])],
+            'charge_unit' => ['nullable', Rule::in(['hour', 'day', 'project', 'session'])],
+            'apply_minimum' => ['nullable', 'boolean'],
         ]);
 
-        $rate = $this->rateFor($data['booking_kind'], $data['service_id'] ?? null, $data['charge_unit'] ?? 'hour');
-        $flat = $this->flatService($data);
-        if (! $flat && $data['hours'] < $rate['minimum_hours']) {
+        $rate = $this->rateFor($data['booking_kind'], $data['service_id'] ?? null, $data['charge_unit'] ?? 'hour', $this->minimumChoice($request));
+        if ($data['hours'] < $rate['minimum_hours']) {
             return response()->json([
                 'message' => 'This booking needs at least '.$rate['minimum_hours'].' hours.',
             ], 422);
         }
 
-        $amount = $flat
-            ? number_format($rate['hourly_rate'], 2, '.', '')
-            : number_format($rate['hourly_rate'] * $data['hours'], 2, '.', '');
+        $amount = number_format($rate['hourly_rate'] * $data['hours'], 2, '.', '');
 
         return response()->json([
             'hourly_rate' => $rate['hourly_rate'],
             'currency' => $rate['currency'],
             'minimum_hours' => $rate['minimum_hours'],
-            'hours' => $flat ? 1 : $data['hours'],
-            'charge_unit' => $flat ? $data['charge_unit'] : 'hour',
+            'hours' => $data['hours'],
+            'charge_unit' => $data['charge_unit'] ?? 'hour',
             'amount' => $amount,
             'label' => $rate['label'],
         ]);
@@ -121,7 +120,8 @@ class BookingController extends Controller
             'booking_date' => ['required', 'date', 'after_or_equal:today'],
             'start_time' => ['required', 'date_format:H:i'],
             'hours' => ['required', 'integer', 'min:1', 'max:12'],
-            'charge_unit' => ['nullable', Rule::in(['hour', 'day', 'project'])],
+            'charge_unit' => ['nullable', Rule::in(['hour', 'day', 'project', 'session'])],
+            'apply_minimum' => ['nullable', 'boolean'],
             'full_name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'email', 'max:180'],
             'phone' => ['nullable', 'string', 'max:40'],
@@ -134,13 +134,8 @@ class BookingController extends Controller
             return response()->json(['message' => 'Choose a service to book.'], 422);
         }
 
-        $flat = $this->flatService($data);
-        if ($flat) {
-            $data = $this->applyDaySpan($data);
-        }
-
-        $rate = $this->rateFor($data['booking_kind'], $data['service_id'] ?? null, $data['charge_unit'] ?? 'hour');
-        if (! $flat && $data['hours'] < $rate['minimum_hours']) {
+        $rate = $this->rateFor($data['booking_kind'], $data['service_id'] ?? null, $data['charge_unit'] ?? 'hour', $this->minimumChoice($request));
+        if ($data['hours'] < $rate['minimum_hours']) {
             return response()->json([
                 'message' => 'This booking needs at least '.$rate['minimum_hours'].' hours.',
             ], 422);
@@ -159,9 +154,7 @@ class BookingController extends Controller
 
         $start = Carbon::parse($data['booking_date'].' '.$data['start_time']);
         $end = $start->copy()->addHours((int) $data['hours']);
-        $amount = $flat
-            ? round($rate['hourly_rate'], 2)
-            : round($rate['hourly_rate'] * $data['hours'], 2);
+        $amount = round($rate['hourly_rate'] * $data['hours'], 2);
         $service = ! empty($data['service_id'])
             ? Service::query()->find($data['service_id'])
             : null;
@@ -182,7 +175,7 @@ class BookingController extends Controller
             'start_time' => $start->format('H:i:s'),
             'end_time' => $end->format('H:i:s'),
             'hours' => (int) $data['hours'],
-            'charge_unit' => $flat ? $data['charge_unit'] : ($data['charge_unit'] ?? 'hour'),
+            'charge_unit' => $data['charge_unit'] ?? 'hour',
             'hourly_rate' => $rate['hourly_rate'],
             'amount' => $amount,
             'currency' => $rate['currency'],
@@ -665,38 +658,30 @@ class BookingController extends Controller
         return $sent;
     }
 
-    private function flatService(array $data): bool
+    private function minimumChoice(Request $request): ?bool
     {
-        return ($data['booking_kind'] ?? '') === 'service'
-            && in_array($data['charge_unit'] ?? 'hour', ['day', 'project'], true);
+        if (! $request->exists('apply_minimum')) {
+            return null;
+        }
+
+        return $request->boolean('apply_minimum');
     }
 
-    private function applyDaySpan(array $data): array
-    {
-        $window = $this->schedule->window();
-        $data['start_time'] = $window['open'];
-        $data['hours'] = max(1, count($this->schedule->slotStarts()));
-
-        return $data;
-    }
-
-    private function rateFor(string $kind, ?int $serviceId, string $unit = 'hour'): array
+    private function rateFor(string $kind, ?int $serviceId, string $unit = 'hour', ?bool $applyMinimum = null): array
     {
         $currency = SiteSetting::getValue('currency', 'CAD');
         $minimum = max(1, (int) SiteSetting::getValue('minimum_hours', '1'));
 
         if ($kind === 'service') {
             $service = Service::query()->where('is_active', true)->findOrFail($serviceId);
-            $price = match ($unit) {
-                'day' => (float) $service->day_charge,
-                'project' => (float) $service->project_charge,
-                default => (float) $service->charge,
-            };
+            $useMinimum = $applyMinimum ?? (bool) $service->enforce_minimum;
 
             return [
-                'hourly_rate' => $price,
+                'hourly_rate' => (float) $service->charge,
                 'currency' => $service->currency ?: $currency,
-                'minimum_hours' => max(1, (int) ($service->minimum_hours ?: $minimum)),
+                'minimum_hours' => $useMinimum
+                    ? max(1, (int) ($service->minimum_hours ?: $minimum))
+                    : 1,
                 'label' => $service->title,
             ];
         }
