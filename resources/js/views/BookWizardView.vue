@@ -9,10 +9,7 @@ import { pageSeo } from '../seo'
 const props = defineProps({
   embedded: { type: Boolean, default: false },
   bookingKind: { type: String, default: '' },
-  chooseUnit: { type: Boolean, default: false },
 })
-
-const emit = defineEmits(['unit-change', 'minimum-change'])
 
 const route = useRoute()
 const router = useRouter()
@@ -29,7 +26,6 @@ const hours = ref(1)
 const error = ref('')
 const sending = ref(false)
 const quote = ref(null)
-const selectedUnit = ref('')
 
 const form = reactive({
   full_name: '',
@@ -61,19 +57,11 @@ const title = computed(() => {
 
 const needsEvent = computed(() => kind.value === 'studio_event' || kind.value === 'owner_event')
 const isService = computed(() => kind.value === 'service')
-const offersUnits = computed(() => isService.value || props.chooseUnit)
-const wholeDay = computed(() => offersUnits.value && !useMinimum.value && ['day', 'project', 'session'].includes(selectedUnit.value))
-const spanHours = computed(() => {
-  const [openHour, openMinute] = String(windowInfo.value.open || '09:00').slice(0, 5).split(':').map(Number)
-  const [closeHour, closeMinute] = String(windowInfo.value.close || '19:00').slice(0, 5).split(':').map(Number)
-  const minutes = (closeHour * 60 + (closeMinute || 0)) - (openHour * 60 + (openMinute || 0))
-  return Math.max(1, Math.round(minutes / 60))
-})
-const byHour = computed(() => !wholeDay.value && (!offersUnits.value || selectedUnit.value !== ''))
-const showCalendar = computed(() => !offersUnits.value || selectedUnit.value !== '')
+const byHour = computed(() => true)
+const showCalendar = computed(() => true)
 const useMinimum = ref(true)
 const bookingMinimum = computed(() => {
-  if (offersUnits.value && !useMinimum.value) return 1
+  if (!useMinimum.value) return 1
   return service.value?.minimum_hours || windowInfo.value.minimum_hours || 1
 })
 const backTo = computed(() => (route.params.slug && !props.embedded ? `/services/${route.params.slug}` : '/book'))
@@ -135,7 +123,6 @@ const weeks = computed(() => {
 
 const rateNote = computed(() => {
   if (!quote.value) return ''
-  if (wholeDay.value) return quoteLine.value
   const min = quote.value.minimum_hours || windowInfo.value.minimum_hours || 1
   return tp('calendar.rate', min, {
     rate: formatMoney(quote.value.hourly_rate, quote.value.currency),
@@ -157,8 +144,7 @@ const maxHours = computed(() => {
 const quoteLine = computed(() => {
   if (!quote.value) return ''
   const total = formatMoney(quote.value.amount, quote.value.currency)
-  const count = wholeDay.value ? (quote.value.hours || spanHours.value) : hours.value
-  return tp('wizard.quote', count, {
+  return tp('wizard.quote', hours.value, {
     rate: formatMoney(quote.value.hourly_rate, quote.value.currency),
     total,
   })
@@ -181,7 +167,7 @@ async function loadMonth() {
     booking_kind: kind.value,
   })
   if (service.value?.id) params.set('service_id', service.value.id)
-  if (offersUnits.value) params.set('apply_minimum', useMinimum.value ? '1' : '0')
+  if (isService.value) params.set('apply_minimum', useMinimum.value ? '1' : '0')
   const data = await api(`/api/availability?${params}`)
   windowInfo.value = data.window
   marks.value = data.marks || {}
@@ -190,7 +176,6 @@ async function loadMonth() {
 
 async function selectDate(day) {
   if (!day.iso || day.past) return
-  if (!byHour.value && day.bookings?.length) return
   selectedDate.value = day.iso
   startTime.value = ''
   const params = new URLSearchParams({
@@ -198,17 +183,10 @@ async function selectDate(day) {
     booking_kind: kind.value,
   })
   if (service.value?.id) params.set('service_id', service.value.id)
-  if (offersUnits.value) params.set('apply_minimum', useMinimum.value ? '1' : '0')
+  if (isService.value) params.set('apply_minimum', useMinimum.value ? '1' : '0')
   const data = await api(`/api/availability?${params}`)
   slots.value = data.slots || []
   windowInfo.value = data.window
-  if (!byHour.value) {
-    if (slots.value.some((slot) => slot.booked)) {
-      selectedDate.value = ''
-      return
-    }
-    startTime.value = windowInfo.value.open
-  }
 }
 
 function pickStart(slot) {
@@ -220,19 +198,14 @@ function pickStart(slot) {
 async function refreshQuote() {
   if (!hours.value) return
   if (isService.value && !service.value?.id) return
-  if (offersUnits.value && !selectedUnit.value) {
-    quote.value = null
-    return
-  }
-  const unit = offersUnits.value ? selectedUnit.value : 'hour'
   quote.value = await api('/api/quotes', {
     method: 'POST',
     body: {
       booking_kind: kind.value,
       service_id: service.value?.id || null,
-      hours: wholeDay.value ? spanHours.value : hours.value,
-      charge_unit: unit,
-      apply_minimum: offersUnits.value ? useMinimum.value : true,
+      hours: hours.value,
+      charge_unit: 'hour',
+      apply_minimum: isService.value ? useMinimum.value : true,
     },
   })
 }
@@ -247,10 +220,10 @@ async function submit() {
         booking_kind: kind.value,
         service_id: service.value?.id || null,
         booking_date: selectedDate.value,
-        start_time: wholeDay.value || !byHour.value ? windowInfo.value.open : startTime.value,
-        hours: wholeDay.value ? spanHours.value : hours.value,
-        charge_unit: offersUnits.value ? selectedUnit.value : 'hour',
-        apply_minimum: offersUnits.value ? useMinimum.value : true,
+        start_time: startTime.value,
+        hours: hours.value,
+        charge_unit: 'hour',
+        apply_minimum: isService.value ? useMinimum.value : true,
         ...form,
       },
     })
@@ -266,38 +239,6 @@ async function submit() {
 }
 
 watch(hours, refreshQuote)
-watch(useMinimum, async (on) => {
-  emit('minimum-change', on)
-  const min = on ? (service.value?.minimum_hours || windowInfo.value.minimum_hours || 1) : 1
-  if (hours.value < min) hours.value = min
-  if (selectedDate.value) {
-    const params = new URLSearchParams({
-      date: selectedDate.value,
-      booking_kind: kind.value,
-    })
-    if (service.value?.id) params.set('service_id', service.value.id)
-    params.set('apply_minimum', on ? '1' : '0')
-    const data = await api(`/api/availability?${params}`)
-    slots.value = data.slots || []
-    windowInfo.value = data.window
-    if (!useMinimum.value && ['day', 'project', 'session'].includes(selectedUnit.value)) {
-      if (slots.value.some((slot) => slot.booked)) {
-        selectedDate.value = ''
-        startTime.value = ''
-      } else if (selectedDate.value) {
-        startTime.value = windowInfo.value.open
-      }
-    }
-  }
-  refreshQuote()
-})
-watch(selectedUnit, () => {
-  selectedDate.value = ''
-  startTime.value = ''
-  slots.value = []
-  emit('unit-change', selectedUnit.value)
-  refreshQuote()
-})
 watch(monthKey, loadMonth)
 watch([title, service], () => {
   if (props.embedded) return
@@ -336,26 +277,8 @@ onMounted(async () => {
       <RouterLink class="btn btn-secondary btn-quote" :to="backTo">{{ t('wizard.back') }}</RouterLink>
       <div>
         <h1 class="type-headline-md text-uppercase">{{ title }}</h1>
-        <p v-if="!offersUnits || useMinimum" class="type-overline text-uppercase ls-20 text-danger mb-0">{{ tp('wizard.minimum', bookingMinimum) }}</p>
+        <p v-if="useMinimum" class="type-overline text-uppercase ls-20 text-danger mb-0">{{ tp('wizard.minimum', bookingMinimum) }}</p>
         <p v-if="quoteLine" class="type-body-md text-primary mb-0">{{ quoteLine }}</p>
-      </div>
-    </div>
-    <div v-if="offersUnits" class="d-flex flex-wrap align-items-end gap-3" :class="{ 'mt-5 pt-lg-3': embedded && isService }">
-      <div class="d-flex flex-column gap-1 flex-grow-1">
-        <label class="type-label-sm text-uppercase" for="service-rate">{{ t('detail.rate') }}</label>
-        <select id="service-rate" v-model="selectedUnit" class="form-select">
-          <option value="">{{ t('detail.chooseRate') }}</option>
-          <option value="hour">{{ t('detail.perHour') }}</option>
-          <option value="day">{{ t('detail.perDay') }}</option>
-          <option value="project">{{ t('detail.perProject') }}</option>
-          <option value="session">{{ t('detail.perSession') }}</option>
-        </select>
-      </div>
-      <div class="d-flex align-items-center gap-2 pb-1">
-        <span class="type-label-sm text-uppercase">{{ t('detail.minimumHours') }}</span>
-        <button class="min-switch" :class="{ on: useMinimum }" type="button" :aria-pressed="useMinimum ? 'true' : 'false'" :aria-label="t('detail.minimumHours')" @click="useMinimum = !useMinimum">
-          <span></span>
-        </button>
       </div>
     </div>
     <p v-if="embedded && quoteLine" class="type-body-md text-primary mb-0">{{ quoteLine }}</p>

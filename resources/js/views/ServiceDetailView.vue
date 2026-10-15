@@ -10,15 +10,13 @@ import BookWizardView from './BookWizardView.vue'
 const route = useRoute()
 const service = ref(null)
 const failed = ref(false)
-const billingUnit = ref('')
-const applyMinimum = ref(true)
 
 const minimum = computed(() => service.value?.minimum_hours || 1)
 const error = computed(() => (failed.value ? t('detail.missing') : ''))
 const priceLabel = computed(() => {
   if (!service.value) return ''
   const formatted = formatMoney(service.value.charge, service.value.currency)
-  const unit = billingUnit.value || service.value.charge_unit
+  const unit = service.value.charge_unit
   if (unit === 'hour') return `${formatted}${t('units.perHour')}`
   if (unit === 'day') return `${formatted}${t('units.perDay')}`
   if (unit === 'session') return `${formatted}${t('units.perSession')}`
@@ -65,13 +63,13 @@ onMounted(async () => {
         <h1 class="type-headline-md type-md-headline-lg text-uppercase">{{ service.title }}</h1>
         <p class="type-body-lg text-body-secondary">{{ service.description }}</p>
         <p class="type-headline-sm text-uppercase text-primary">{{ priceLabel }}</p>
-        <p v-if="service.enforce_minimum !== false && applyMinimum" class="type-body-md text-body-secondary mb-0">{{ tp('detail.minimum', minimum) }}</p>
+        <p v-if="service.enforce_minimum !== false" class="type-body-md text-body-secondary mb-0">{{ tp('detail.minimum', minimum) }}</p>
         <div class="d-flex flex-wrap gap-2">
           <span v-for="tag in service.tags" :key="tag" class="bg-secondary px-12 py-1 type-label-sm text-uppercase ls-wider">{{ tag }}</span>
         </div>
       </div>
     </div>
-    <BookWizardView embedded @unit-change="billingUnit = $event" @minimum-change="applyMinimum = $event" />
+    <BookWizardView embedded />
   </section>
   <section v-else class="site-wrap py-3xl">
     <p class="type-body-md text-danger">{{ error || t('detail.loading') }}</p>

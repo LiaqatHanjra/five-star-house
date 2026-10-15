@@ -93,7 +93,7 @@ onMounted(async () => {
       </div>
       <h2 class="type-headline-md text-uppercase mb-2">{{ t('book.studioTitle') }}</h2>
       <p class="type-body-md text-body-secondary mb-4">{{ t('book.studioCopy', { n: settings.studio_minimum_hours || settings.minimum_hours || 1, unit: hourUnit(settings.studio_minimum_hours || settings.minimum_hours || 1) }) }}</p>
-      <BookWizardView embedded booking-kind="studio_time" choose-unit />
+      <BookWizardView embedded booking-kind="studio_time" />
     </section>
 
     <section class="site-wrap book-panel">
