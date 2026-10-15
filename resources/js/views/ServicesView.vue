@@ -42,21 +42,21 @@ onMounted(async () => {
 </script>
 
 <template>
-  <section class="w-100 bg-dark py-xl py-lg-3xl">
+  <section class="page-banner">
     <div class="site-wrap">
       <p v-if="error" class="type-body-md text-danger mb-3">{{ error }}</p>
-      <div class="row g-4 g-lg-xl align-items-center">
-        <div class="col-lg-6 d-flex flex-column gap-3">
+      <div class="row g-4 g-lg-xl page-banner-grid">
+        <div class="col-lg-6 page-banner-copy">
           <div class="d-flex align-items-center gap-1">
             <span class="sq-2 bg-danger d-inline-block" aria-hidden="true"></span>
             <span class="type-overline text-uppercase ls-25 text-danger">{{ t('services.kicker') }}</span>
           </div>
-          <h1 class="type-headline-mobile type-md-headline-lg text-uppercase lh-1 ls-tight">
+          <h1 class="page-banner-title">
             <template v-for="(line, index) in intro.lines" :key="index">
               {{ line }}<br v-if="index < intro.lines.length - 1">
             </template>
           </h1>
-          <p class="type-body-lg text-body-secondary max-w-xl pt-1">
+          <p class="page-banner-lead text-body-secondary">
             {{ intro.description }}
           </p>
           <div class="d-flex flex-wrap align-items-center gap-3 pt-2">
@@ -67,7 +67,7 @@ onMounted(async () => {
           </div>
         </div>
         <div class="col-lg-6">
-          <div class="zoom-frame zoom-slow position-relative w-100 aspect-16x10 bg-body-secondary overflow-hidden shadow-2xl">
+          <div class="zoom-frame zoom-slow page-banner-media position-relative bg-body-secondary overflow-hidden shadow-2xl">
             <div v-if="banner" class="media-cover w-100 h-100" :style="{ backgroundImage: `url('${banner.image_url}')` }"></div>
             <div class="overlay-fade position-absolute top-0 start-0 end-0 bottom-0 opacity-80"></div>
             <div class="position-absolute bottom-0 start-0 end-0 m-3 d-flex align-items-center justify-content-between text-body-secondary type-label-sm">

@@ -38,20 +38,21 @@ onMounted(async () => {
 </script>
 
 <template>
-  <section class="site-wrap py-xl py-lg-3xl">
+  <section class="page-banner">
+    <div class="site-wrap">
     <p v-if="error" class="type-body-md text-danger">{{ error }}</p>
-    <div class="row g-4 g-lg-xl align-items-center">
-      <div class="col-lg-6 d-flex flex-column align-items-start z-1">
-        <div class="d-inline-flex align-items-center gap-1 mb-3">
+    <div class="row g-4 g-lg-xl page-banner-grid">
+      <div class="col-lg-6 page-banner-copy z-1">
+        <div class="d-flex align-items-center gap-1">
           <span class="sq-2 bg-danger d-inline-block" aria-hidden="true"></span>
-          <p class="type-overline text-uppercase ls-22 text-primary">{{ t('home.kicker') }}</p>
+          <span class="type-overline text-uppercase ls-25 text-danger">{{ t('home.kicker') }}</span>
         </div>
-        <h1 class="type-hero text-uppercase ls-tight lh-1 mb-3">
+        <h1 class="page-banner-title">
           <template v-for="(line, index) in intro.lines" :key="index">
             {{ line }}<br v-if="index < intro.lines.length - 1">
           </template>
         </h1>
-        <p class="type-body-lg text-body-secondary max-w-lg mb-3">
+        <p class="page-banner-lead text-body-secondary">
           {{ intro.description }}
         </p>
         <div v-if="intro.tags.length" class="d-flex flex-wrap align-items-center gap-3 mb-xl">
@@ -87,19 +88,17 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div class="col-lg-6 position-relative mt-4 mt-lg-0">
-        <div class="portrait-frame position-relative w-100 aspect-4x5 bg-body-secondary overflow-hidden rounded-1">
-          <img v-if="hero" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover" :alt="hero.alt || 'Studio portrait'" :src="hero.image_url">
+      <div class="col-lg-6">
+        <div class="zoom-frame zoom-slow page-banner-media position-relative bg-body-secondary overflow-hidden shadow-2xl">
+          <div v-if="hero" class="media-cover w-100 h-100" :style="{ backgroundImage: `url('${hero.image_url}')` }"></div>
           <div class="overlay-fade position-absolute top-0 start-0 end-0 bottom-0 opacity-80"></div>
-          <div class="position-absolute bottom-0 start-0 m-3 d-flex align-items-center gap-2 bg-dark bg-opacity-90 px-3 py-1 rounded-1 backdrop-md">
-            <span class="sq-25 rounded-circle bg-danger animate-pulse" aria-hidden="true"></span>
-            <span class="type-overline text-uppercase ls-widest">{{ hero?.title || t('home.stageReady') }}</span>
-          </div>
-          <div class="position-absolute top-0 end-0 m-3">
-            <span class="type-label-sm text-uppercase ls-widest text-body-tertiary bg-dark bg-opacity-80 px-2 py-1 rounded-1">{{ hero?.category || t('home.heroRef') }}</span>
+          <div class="position-absolute bottom-0 start-0 end-0 m-3 d-flex align-items-center justify-content-between text-body-secondary type-label-sm">
+            <span class="bg-dark bg-opacity-80 px-2 py-1 text-uppercase ls-widest text-fixed">{{ hero?.category || t('home.heroRef') }}</span>
+            <span class="text-uppercase text-body-tertiary ls-wider d-none d-sm-inline-block">{{ hero?.title || t('home.stageReady') }}</span>
           </div>
         </div>
       </div>
+    </div>
     </div>
   </section>
 
