@@ -191,6 +191,8 @@
 }
 .book-hero-lead { max-width: 34rem; }
 .book-panel { padding-top: 3.5rem; padding-bottom: 4rem; }
+.book-studio { padding-top: 3.5rem; padding-bottom: .5rem; }
+.book-studio .booking-cal { overflow-x: auto; }
 .book-label {
   color: #d7d3d1;
   font-family: var(--display);

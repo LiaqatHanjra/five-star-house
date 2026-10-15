@@ -8,6 +8,8 @@ import { pageSeo } from '../seo'
 
 const props = defineProps({
   embedded: { type: Boolean, default: false },
+  bookingKind: { type: String, default: '' },
+  chooseUnit: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['unit-change', 'minimum-change'])
@@ -39,6 +41,7 @@ const form = reactive({
 })
 
 const kind = computed(() => {
+  if (props.bookingKind) return props.bookingKind
   if (route.params.slug) return 'service'
   if (route.params.kind === 'studio-event') return 'studio_event'
   if (route.params.kind === 'owner-event') return 'owner_event'
@@ -58,11 +61,19 @@ const title = computed(() => {
 
 const needsEvent = computed(() => kind.value === 'studio_event' || kind.value === 'owner_event')
 const isService = computed(() => kind.value === 'service')
-const byHour = computed(() => !isService.value || selectedUnit.value !== '')
-const showCalendar = computed(() => !isService.value || selectedUnit.value !== '')
+const offersUnits = computed(() => isService.value || props.chooseUnit)
+const wholeDay = computed(() => offersUnits.value && !useMinimum.value && ['day', 'project', 'session'].includes(selectedUnit.value))
+const spanHours = computed(() => {
+  const [openHour, openMinute] = String(windowInfo.value.open || '09:00').slice(0, 5).split(':').map(Number)
+  const [closeHour, closeMinute] = String(windowInfo.value.close || '19:00').slice(0, 5).split(':').map(Number)
+  const minutes = (closeHour * 60 + (closeMinute || 0)) - (openHour * 60 + (openMinute || 0))
+  return Math.max(1, Math.round(minutes / 60))
+})
+const byHour = computed(() => !wholeDay.value && (!offersUnits.value || selectedUnit.value !== ''))
+const showCalendar = computed(() => !offersUnits.value || selectedUnit.value !== '')
 const useMinimum = ref(true)
 const bookingMinimum = computed(() => {
-  if (isService.value && !useMinimum.value) return 1
+  if (offersUnits.value && !useMinimum.value) return 1
   return service.value?.minimum_hours || windowInfo.value.minimum_hours || 1
 })
 const backTo = computed(() => (route.params.slug && !props.embedded ? `/services/${route.params.slug}` : '/book'))
@@ -124,6 +135,7 @@ const weeks = computed(() => {
 
 const rateNote = computed(() => {
   if (!quote.value) return ''
+  if (wholeDay.value) return quoteLine.value
   const min = quote.value.minimum_hours || windowInfo.value.minimum_hours || 1
   return tp('calendar.rate', min, {
     rate: formatMoney(quote.value.hourly_rate, quote.value.currency),
@@ -145,7 +157,8 @@ const maxHours = computed(() => {
 const quoteLine = computed(() => {
   if (!quote.value) return ''
   const total = formatMoney(quote.value.amount, quote.value.currency)
-  return tp('wizard.quote', hours.value, {
+  const count = wholeDay.value ? (quote.value.hours || spanHours.value) : hours.value
+  return tp('wizard.quote', count, {
     rate: formatMoney(quote.value.hourly_rate, quote.value.currency),
     total,
   })
@@ -168,7 +181,7 @@ async function loadMonth() {
     booking_kind: kind.value,
   })
   if (service.value?.id) params.set('service_id', service.value.id)
-  if (isService.value) params.set('apply_minimum', useMinimum.value ? '1' : '0')
+  if (offersUnits.value) params.set('apply_minimum', useMinimum.value ? '1' : '0')
   const data = await api(`/api/availability?${params}`)
   windowInfo.value = data.window
   marks.value = data.marks || {}
@@ -185,7 +198,7 @@ async function selectDate(day) {
     booking_kind: kind.value,
   })
   if (service.value?.id) params.set('service_id', service.value.id)
-  if (isService.value) params.set('apply_minimum', useMinimum.value ? '1' : '0')
+  if (offersUnits.value) params.set('apply_minimum', useMinimum.value ? '1' : '0')
   const data = await api(`/api/availability?${params}`)
   slots.value = data.slots || []
   windowInfo.value = data.window
@@ -207,19 +220,19 @@ function pickStart(slot) {
 async function refreshQuote() {
   if (!hours.value) return
   if (isService.value && !service.value?.id) return
-  if (isService.value && !selectedUnit.value) {
+  if (offersUnits.value && !selectedUnit.value) {
     quote.value = null
     return
   }
-  const unit = isService.value ? selectedUnit.value : 'hour'
+  const unit = offersUnits.value ? selectedUnit.value : 'hour'
   quote.value = await api('/api/quotes', {
     method: 'POST',
     body: {
       booking_kind: kind.value,
       service_id: service.value?.id || null,
-      hours: hours.value,
+      hours: wholeDay.value ? spanHours.value : hours.value,
       charge_unit: unit,
-      apply_minimum: !isService.value || useMinimum.value,
+      apply_minimum: offersUnits.value ? useMinimum.value : true,
     },
   })
 }
@@ -234,10 +247,10 @@ async function submit() {
         booking_kind: kind.value,
         service_id: service.value?.id || null,
         booking_date: selectedDate.value,
-        start_time: byHour.value ? startTime.value : windowInfo.value.open,
-        hours: byHour.value ? hours.value : 1,
-        charge_unit: isService.value ? selectedUnit.value : 'hour',
-        apply_minimum: !isService.value || useMinimum.value,
+        start_time: wholeDay.value || !byHour.value ? windowInfo.value.open : startTime.value,
+        hours: wholeDay.value ? spanHours.value : hours.value,
+        charge_unit: offersUnits.value ? selectedUnit.value : 'hour',
+        apply_minimum: offersUnits.value ? useMinimum.value : true,
         ...form,
       },
     })
@@ -267,6 +280,14 @@ watch(useMinimum, async (on) => {
     const data = await api(`/api/availability?${params}`)
     slots.value = data.slots || []
     windowInfo.value = data.window
+    if (!useMinimum.value && ['day', 'project', 'session'].includes(selectedUnit.value)) {
+      if (slots.value.some((slot) => slot.booked)) {
+        selectedDate.value = ''
+        startTime.value = ''
+      } else if (selectedDate.value) {
+        startTime.value = windowInfo.value.open
+      }
+    }
   }
   refreshQuote()
 })
@@ -279,6 +300,7 @@ watch(selectedUnit, () => {
 })
 watch(monthKey, loadMonth)
 watch([title, service], () => {
+  if (props.embedded) return
   const name = title.value
   if (!name || String(name).startsWith('book.titles.')) return
   pageSeo.value = {
@@ -314,11 +336,11 @@ onMounted(async () => {
       <RouterLink class="btn btn-secondary btn-quote" :to="backTo">{{ t('wizard.back') }}</RouterLink>
       <div>
         <h1 class="type-headline-md text-uppercase">{{ title }}</h1>
-        <p v-if="!isService || useMinimum" class="type-overline text-uppercase ls-20 text-danger mb-0">{{ tp('wizard.minimum', bookingMinimum) }}</p>
+        <p v-if="!offersUnits || useMinimum" class="type-overline text-uppercase ls-20 text-danger mb-0">{{ tp('wizard.minimum', bookingMinimum) }}</p>
         <p v-if="quoteLine" class="type-body-md text-primary mb-0">{{ quoteLine }}</p>
       </div>
     </div>
-    <div v-if="isService" class="d-flex flex-wrap align-items-end gap-3" :class="{ 'mt-5 pt-lg-3': embedded }">
+    <div v-if="offersUnits" class="d-flex flex-wrap align-items-end gap-3" :class="{ 'mt-5 pt-lg-3': embedded && isService }">
       <div class="d-flex flex-column gap-1 flex-grow-1">
         <label class="type-label-sm text-uppercase" for="service-rate">{{ t('detail.rate') }}</label>
         <select id="service-rate" v-model="selectedUnit" class="form-select">
