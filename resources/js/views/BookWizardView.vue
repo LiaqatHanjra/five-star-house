@@ -11,6 +11,8 @@ const props = defineProps({
   bookingKind: { type: String, default: '' },
 })
 
+const emit = defineEmits(['close'])
+
 const route = useRoute()
 const router = useRouter()
 const service = ref(null)
@@ -67,8 +69,6 @@ const bookingMinimum = computed(() => {
 const backTo = computed(() => (route.params.slug && !props.embedded ? `/services/${route.params.slug}` : '/book'))
 const monthKey = computed(() => `${cursor.value.getFullYear()}-${String(cursor.value.getMonth() + 1).padStart(2, '0')}`)
 const monthLabel = computed(() => cursor.value.toLocaleDateString(dateLocale(), { month: 'long', year: 'numeric' }))
-const weekdays = computed(() => t('calendar.weekdays'))
-const weekLabels = computed(() => t('calendar.weeks'))
 
 function clockLabel(value) {
   const raw = String(value || '').slice(0, 5)
@@ -121,13 +121,7 @@ const weeks = computed(() => {
   return rows
 })
 
-const rateNote = computed(() => {
-  if (!quote.value) return ''
-  const min = quote.value.minimum_hours || windowInfo.value.minimum_hours || 1
-  return tp('calendar.rate', min, {
-    rate: formatMoney(quote.value.hourly_rate, quote.value.currency),
-  })
-})
+const monthDays = computed(() => weeks.value.flat().filter((day) => !day.outside))
 
 const maxHours = computed(() => {
   const floor = bookingMinimum.value
@@ -272,68 +266,54 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div :class="embedded ? 'd-flex flex-column gap-4' : 'site-wrap py-xl py-lg-3xl d-flex flex-column gap-4'">
-    <div v-if="!embedded" class="d-flex flex-column align-items-start gap-3">
-      <RouterLink class="btn btn-secondary btn-quote" :to="backTo">{{ t('wizard.back') }}</RouterLink>
-      <div>
-        <h1 class="type-headline-md text-uppercase">{{ title }}</h1>
-        <p v-if="useMinimum" class="type-overline text-uppercase ls-20 text-danger mb-0">{{ tp('wizard.minimum', bookingMinimum) }}</p>
-        <p v-if="quoteLine" class="type-body-md text-primary mb-0">{{ quoteLine }}</p>
-      </div>
-    </div>
-    <p v-if="embedded && quoteLine" class="type-body-md text-primary mb-0">{{ quoteLine }}</p>
+  <div :class="embedded ? 'book-cal-panel' : 'site-wrap py-xl py-lg-3xl book-cal-panel'">
+    <button v-if="embedded && bookingKind" class="book-cal-back" type="button" @click="emit('close')">
+      <span class="book-cal-back-mark"></span>
+      {{ t('wizard.back') }}
+    </button>
+    <RouterLink v-else-if="!embedded" class="book-cal-back" :to="backTo">
+      <span class="book-cal-back-mark"></span>
+      {{ t('wizard.back') }}
+    </RouterLink>
+    <h2 class="book-cal-title">{{ title }}</h2>
+    <p v-if="quoteLine" class="book-cal-quote">{{ quoteLine }}</p>
 
-    <div v-if="showCalendar" class="d-flex flex-column gap-4">
+    <div v-if="showCalendar" class="book-cal-layout">
       <div class="booking-cal">
-        <div class="booking-cal-kicker">
-          <span class="booking-cal-mark"></span>
-          <span>{{ t('calendar.title') }}</span>
-        </div>
         <div class="booking-cal-nav">
-          <button class="booking-cal-arrow" type="button" :aria-label="t('calendar.prev')" @click="shiftMonth(-1)">‹</button>
+          <button type="button" :aria-label="t('calendar.prev')" @click="shiftMonth(-1)">{{ t('calendar.pick') }}</button>
           <strong>{{ monthLabel }}</strong>
-          <button class="booking-cal-arrow" type="button" :aria-label="t('calendar.next')" @click="shiftMonth(1)">›</button>
+          <button type="button" :aria-label="t('calendar.next')" @click="shiftMonth(1)">{{ t('calendar.nextWord') }}</button>
         </div>
-        <div class="booking-cal-scroll">
-          <div class="booking-cal-sheet">
-            <div class="booking-cal-head">
-              <span>{{ t('calendar.date') }}</span>
-              <span v-for="(name, index) in weekdays" :key="index">{{ name }}</span>
-            </div>
-            <div v-for="(week, weekIndex) in weeks" :key="weekIndex" class="booking-cal-row">
-              <div class="cal-week">{{ weekLabels[weekIndex] }}</div>
-              <div v-for="(day, dayIndex) in week" :key="dayIndex" class="cal-cell" :class="{ 'is-blank': day.outside }">
-                <button
-                  v-if="!day.outside"
-                  class="cal-day"
-                  :class="{ past: day.past && !day.bookings?.length, 'booked-full': day.full, 'booked-part': day.bookings?.length && !day.full, selected: day.iso === selectedDate }"
-                  :disabled="day.past && !day.bookings?.length"
-                  type="button"
-                  @click="selectDate(day)"
-                >
-                  <span class="cal-num">{{ day.label }}</span>
-                  <span v-if="day.bookings?.length && !day.full" class="cal-flag"></span>
-                  <span v-for="(note, noteIndex) in day.notes" :key="noteIndex" class="cal-note">
-                    <span v-if="note.name">{{ note.name }}</span>
-                    <span>{{ note.range }}</span>
-                  </span>
-                </button>
-                <span v-if="day.bookings?.length" class="cal-tip" :class="day.freeHours ? 'is-open' : 'is-full'">
-                  <span class="cal-tip-item" :class="day.freeHours ? 'cal-tip-open' : 'cal-tip-full'">
-                    {{ day.freeHours ? tp('wizard.slotAvailable', day.freeHours) : t('wizard.slotFull') }}
-                  </span>
-                </span>
-              </div>
-            </div>
+        <div class="booking-cal-grid">
+          <div v-for="day in monthDays" :key="day.iso" class="cal-cell">
+            <button
+              class="cal-day"
+              :class="{ past: day.past && !day.bookings?.length, booked: day.bookings?.length, selected: day.iso === selectedDate }"
+              :disabled="day.past && !day.bookings?.length"
+              type="button"
+              @click="selectDate(day)"
+            >{{ day.label }}</button>
+            <span v-if="day.bookings?.length" class="cal-tip" :class="day.freeHours ? 'is-open' : 'is-full'">
+              <span v-for="(note, noteIndex) in day.notes" :key="noteIndex" class="cal-tip-item">
+                <strong v-if="note.name">{{ note.name }}</strong>
+                <span>{{ note.range }}</span>
+              </span>
+              <span class="cal-tip-item" :class="day.freeHours ? 'cal-tip-open' : 'cal-tip-full'">
+                {{ day.freeHours ? tp('wizard.slotAvailable', day.freeHours) : t('wizard.slotFull') }}
+              </span>
+            </span>
           </div>
         </div>
-        <p v-if="rateNote" class="booking-cal-rate">{{ rateNote }}</p>
-        <p class="booking-cal-hint">{{ t('wizard.bookedHint') }}</p>
+        <p class="booking-cal-hint">
+          {{ t('wizard.bookedHint') }}
+          {{ t('wizard.slotHint', { open: windowInfo.open, close: windowInfo.close }) }}
+        </p>
       </div>
 
-      <div class="d-flex flex-column gap-4">
-        <div v-if="selectedDate && byHour" class="bg-dark p-3 p-md-4">
-          <h2 class="type-headline-sm text-uppercase mb-3">{{ t('wizard.chooseStart', { date: selectedDate }) }}</h2>
+      <div class="book-cal-side">
+        <div v-if="selectedDate && byHour" class="book-cal-times">
+          <h3>{{ t('wizard.chooseStart', { date: selectedDate }) }}</h3>
           <div class="hour-row">
             <span v-for="slot in slots" :key="slot.time" class="hour-wrap">
               <button
@@ -358,10 +338,11 @@ onMounted(async () => {
               </span>
             </span>
           </div>
-          <p class="type-body-sm text-body-tertiary mt-3 mb-0">{{ t('wizard.slotHint', { open: windowInfo.open, close: windowInfo.close }) }}</p>
         </div>
+      </div>
+    </div>
 
-        <form v-if="byHour ? startTime : selectedDate" class="bg-dark p-3 p-md-4 d-flex flex-column gap-3" @submit.prevent="submit">
+    <form v-if="showCalendar && (byHour ? startTime : selectedDate)" class="book-cal-form d-flex flex-column gap-3" @submit.prevent="submit">
           <div v-if="byHour" class="d-flex flex-column gap-1">
             <label class="type-label-sm text-uppercase">{{ t('wizard.hours') }}</label>
             <select v-model.number="hours" class="form-select">
@@ -398,8 +379,6 @@ onMounted(async () => {
           <button class="btn btn-danger btn-submit" :disabled="sending" type="submit">
             {{ sending ? t('wizard.saving') : t('wizard.continue') }}
           </button>
-        </form>
-      </div>
-    </div>
+    </form>
   </div>
 </template>

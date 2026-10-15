@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { api } from '../api'
 import { hourUnit, locale, t } from '../i18n'
 import BookWizardView from './BookWizardView.vue'
@@ -12,6 +12,40 @@ const services = ref([])
 const sending = ref(false)
 const error = ref('')
 const result = ref(null)
+const showStudio = ref('')
+const studioPanel = ref(null)
+
+function fillCopy(text, hours) {
+  return String(text || '')
+    .replaceAll('{n}', String(hours))
+    .replaceAll('{unit}', hourUnit(hours))
+}
+
+const studioCards = computed(() => {
+  const text = content.value?.[locale.value] || {}
+  const hours = Number(settings.value.minimum_hours) || 1
+  const studioHours = Number(settings.value.studio_minimum_hours) || hours
+  return [
+    {
+      kind: 'studio_time',
+      kicker: text.studio_kicker || t('book.studioKicker'),
+      title: text.studio_title || t('book.studioTitle'),
+      copy: fillCopy(text.studio_copy, studioHours) || t('book.studioCopy', { n: studioHours, unit: hourUnit(studioHours) }),
+    },
+    {
+      kind: 'owner_event',
+      kicker: text.owner_kicker || t('book.ownerKicker'),
+      title: text.owner_title || t('book.ownerTitle'),
+      copy: fillCopy(text.owner_copy, hours) || t('book.ownerCopy', { n: hours, unit: hourUnit(hours) }),
+    },
+    {
+      kind: 'studio_event',
+      kicker: text.event_kicker || t('book.eventKicker'),
+      title: text.event_title || t('book.eventTitle'),
+      copy: fillCopy(text.event_copy, hours) || t('book.eventCopy', { n: hours, unit: hourUnit(hours) }),
+    },
+  ]
+})
 
 const form = reactive({
   full_name: '',
@@ -33,6 +67,13 @@ const socials = computed(() => [
 
 function linkMail(email) {
   return email ? `mailto:${email}` : ''
+}
+
+function openStudio(kind) {
+  showStudio.value = kind
+  nextTick(() => {
+    studioPanel.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  })
 }
 
 async function submit() {
@@ -87,13 +128,30 @@ onMounted(async () => {
     </section>
 
     <section class="site-wrap book-studio">
-      <div class="d-flex align-items-center gap-2 mb-2">
-        <span class="sq-2 bg-danger d-inline-block"></span>
-        <span class="type-overline text-uppercase ls-25 text-danger">{{ t('book.studioKicker') }}</span>
+      <div class="book-studio-row">
+        <button
+          v-for="card in studioCards"
+          :key="card.kind"
+          class="book-studio-card"
+          :class="{ open: showStudio === card.kind }"
+          type="button"
+          @click="openStudio(card.kind)"
+        >
+          <span class="d-flex align-items-center gap-2 mb-2">
+            <span class="sq-2 bg-danger d-inline-block"></span>
+            <span class="type-overline text-uppercase ls-25 text-danger">{{ card.kicker }}</span>
+          </span>
+          <span class="type-headline-sm text-uppercase d-block mb-2">{{ card.title }}</span>
+          <span class="type-body-md text-body-secondary d-block book-studio-copy">{{ card.copy }}</span>
+          <span class="book-studio-action">
+            {{ t('book.bookNow') }}
+            <span class="book-studio-arrow" aria-hidden="true">➔</span>
+          </span>
+        </button>
       </div>
-      <h2 class="type-headline-md text-uppercase mb-2">{{ t('book.studioTitle') }}</h2>
-      <p class="type-body-md text-body-secondary mb-4">{{ t('book.studioCopy', { n: settings.studio_minimum_hours || settings.minimum_hours || 1, unit: hourUnit(settings.studio_minimum_hours || settings.minimum_hours || 1) }) }}</p>
-      <BookWizardView embedded booking-kind="studio_time" />
+      <div v-if="showStudio" ref="studioPanel" class="book-studio-calendar">
+        <BookWizardView :key="showStudio" embedded :booking-kind="showStudio" @close="showStudio = ''" />
+      </div>
     </section>
 
     <section class="site-wrap book-panel">

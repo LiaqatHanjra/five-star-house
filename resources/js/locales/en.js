@@ -57,6 +57,8 @@ export default {
     weeks: ['1st Week', '2nd Week', '3rd Week', '4th Week', '5th Week', '6th Week'],
     prev: 'Previous month',
     next: 'Next month',
+    pick: 'Pick',
+    nextWord: 'Next',
     rate: {
       one: '{rate}/hour ({n}-hour minimum)',
       other: '{rate}/hour ({n}-hour minimum)',
@@ -161,6 +163,7 @@ export default {
     ownerKicker: 'The owner',
     ownerTitle: 'Book the owner for an event',
     ownerCopy: 'The owner directs, shoots, or hosts. Minimum {n} {unit}.',
+    bookNow: 'Book now',
     from: 'From ',
     serviceHint: 'Looking for a listed service? Open it from the services page and use Book this service.',
     name: 'Name',
@@ -200,7 +203,7 @@ export default {
       one: '{rate} / session · {total} for {n} hour',
       other: '{rate} / session · {total} for {n} hours',
     },
-    bookedHint: 'Hover a red date to see if any hours are still open.',
+    bookedHint: 'Red dates are already blocked or booked. Hover a red date to see the booking.',
     slotAvailable: {
       one: '{n} hour available',
       other: '{n} hours available',

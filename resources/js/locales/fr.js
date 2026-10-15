@@ -57,6 +57,8 @@ export default {
     weeks: ['1re semaine', '2e semaine', '3e semaine', '4e semaine', '5e semaine', '6e semaine'],
     prev: 'Mois précédent',
     next: 'Mois suivant',
+    pick: 'Choisir',
+    nextWord: 'Suivant',
     rate: {
       one: '{rate}/heure (minimum {n} heure)',
       other: '{rate}/heure (minimum {n} heures)',
@@ -161,6 +163,7 @@ export default {
     ownerKicker: 'Le propriétaire',
     ownerTitle: 'Réserver le propriétaire pour un événement',
     ownerCopy: 'Le propriétaire réalise, filme ou anime. Minimum {n} {unit}.',
+    bookNow: 'Réserver',
     from: 'Dès ',
     serviceHint: 'Vous cherchez un service au catalogue? Ouvrez-le depuis la page Services et utilisez Réserver ce service.',
     name: 'Nom',
@@ -200,7 +203,7 @@ export default {
       one: '{rate} / séance · {total} pour {n} heure',
       other: '{rate} / séance · {total} pour {n} heures',
     },
-    bookedHint: 'Survolez une date rouge pour voir s’il reste des heures.',
+    bookedHint: 'Les dates rouges sont déjà bloquées ou réservées. Survolez une date rouge pour voir la réservation.',
     slotAvailable: {
       one: '{n} heure disponible',
       other: '{n} heures disponibles',

@@ -1,148 +1,133 @@
-.booking-cal {
-  background: #fff;
-  color: #111;
-  padding: 1.15rem 1.15rem 1rem;
-}
-.booking-cal-kicker {
-  display: flex;
+.book-cal-panel { color: #fff; }
+.book-cal-back {
+  display: inline-flex;
   align-items: center;
-  gap: .55rem;
-  color: #e10600;
+  gap: .5rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
   font-family: var(--display);
   font-size: .72rem;
   font-weight: 700;
   letter-spacing: .14em;
+  line-height: 1;
+  text-decoration: none;
   text-transform: uppercase;
 }
-.booking-cal-mark {
+.book-cal-back-mark {
   width: .55rem;
   height: .55rem;
   background: #e10600;
   flex: 0 0 auto;
 }
-.booking-cal-nav {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1.35rem;
-  margin: .7rem 0 .95rem;
-}
-.booking-cal-nav strong {
+.book-cal-title {
+  margin: .9rem 0 .4rem;
   font-family: var(--display);
-  font-size: 1.05rem;
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
   font-weight: 700;
-  letter-spacing: .06em;
+  letter-spacing: -.02em;
+  line-height: .95;
   text-transform: uppercase;
 }
-.booking-cal-arrow {
+.book-cal-quote {
+  margin: 0 0 1.6rem;
+  color: #a3a3a3;
+  font-size: .95rem;
+}
+.book-cal-layout {
+  display: grid;
+  grid-template-columns: minmax(22rem, 34rem) minmax(0, 1fr);
+  gap: 2.75rem;
+  align-items: start;
+}
+.book-cal-form { margin-top: 1.75rem; max-width: 46rem; }
+
+.booking-cal {
+  background: transparent;
+  color: #fff;
+  padding: 0;
+}
+.booking-cal-nav {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  margin: 0 0 .85rem;
+}
+.booking-cal-nav button {
   border: 0;
   background: transparent;
-  color: #111;
-  font-size: 1.45rem;
-  line-height: 1;
-  padding: 0 .2rem;
+  color: #fff;
+  padding: 0;
+  font-family: var(--display);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
 }
-.booking-cal-scroll { overflow-x: auto; }
-.booking-cal-sheet { min-width: 720px; }
-.booking-cal-head,
-.booking-cal-row {
-  display: grid;
-  grid-template-columns: 6.4rem repeat(7, minmax(0, 1fr));
-}
-.booking-cal-sheet {
-  border-top: 1px solid #e6e6e6;
-  border-left: 1px solid #e6e6e6;
-}
-.booking-cal-head span,
-.booking-cal-row > * {
-  border-right: 1px solid #e6e6e6;
-  border-bottom: 1px solid #e6e6e6;
-  background: #fff;
-}
-.booking-cal-head span,
-.cal-week {
-  display: flex;
-  align-items: center;
-  min-height: 2.35rem;
-  padding: .4rem .55rem;
+.booking-cal-nav button:first-child { justify-self: start; }
+.booking-cal-nav button:last-child { justify-self: end; }
+.booking-cal-nav strong {
   font-family: var(--display);
   font-size: .78rem;
   font-weight: 700;
-  color: #111;
+  letter-spacing: .08em;
+  text-transform: uppercase;
 }
-.booking-cal-head span:not(:first-child) { justify-content: center; }
-
+.booking-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: .35rem;
+}
 .cal-cell,
 .hour-wrap { position: relative; }
-.cal-cell { display: flex; min-height: 5.5rem; }
-.cal-cell.is-blank { min-height: 5.5rem; }
 .cal-cell:hover,
 .hour-wrap:hover { z-index: 6; }
+.booking-cal-grid .cal-cell {
+  display: block;
+  min-height: 0;
+}
+.booking-cal-grid .cal-cell:nth-child(7n) .cal-tip,
+.booking-cal-grid .cal-cell:nth-child(7n-1) .cal-tip { left: auto; right: 0; }
 .booking-cal .cal-day {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: .12rem;
+  display: grid;
+  place-items: center;
   width: 100%;
-  min-height: 5.5rem;
+  aspect-ratio: 1;
+  min-height: 0;
   margin: 0;
-  padding: .4rem .4rem .45rem;
+  padding: 0;
   border: 0;
   border-radius: 0;
-  background: #fff;
-  color: #111;
-  text-align: left;
+  background: transparent;
+  color: #fff;
   font-family: var(--display);
-  line-height: 1.15;
+  font-size: .82rem;
+  font-weight: 600;
+  line-height: 1;
 }
-.booking-cal .cal-num {
-  font-size: .95rem;
-  font-weight: 700;
-}
-.booking-cal .cal-flag {
-  position: absolute;
-  top: .45rem;
-  right: .4rem;
-  width: .5rem;
-  height: .5rem;
-  background: #e10600;
-}
-.booking-cal .cal-note {
-  display: flex;
-  flex-direction: column;
-  max-width: 100%;
-  font-family: var(--body);
-  font-size: .62rem;
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: 0;
-  text-transform: none;
-}
-.booking-cal .cal-day.past { color: #b0b0b0; }
-.booking-cal .cal-day.booked-part { color: #111; }
-.booking-cal .cal-day.booked-full,
-.hour-chip.booked {
+.booking-cal .cal-day.booked {
   background: #e10600;
   color: #fff;
-  opacity: 1;
-  text-decoration: none;
 }
-.booking-cal .cal-day.selected:not(.booked-full) { box-shadow: inset 0 0 0 2px #e10600; }
-.booking-cal .cal-day.booked-full.selected { box-shadow: inset 0 0 0 2px #111; }
+.booking-cal .cal-day.selected { box-shadow: inset 0 0 0 2px #fff; }
 .booking-cal .cal-day:disabled { cursor: default; }
-
-.booking-cal-rate {
-  margin: .85rem 0 0;
-  color: #111;
-  font-family: var(--display);
-  font-size: .98rem;
-  font-weight: 700;
-}
 .booking-cal-hint {
-  margin: .25rem 0 0;
-  color: #6b6b6b;
-  font-size: .75rem;
+  margin: 1rem 0 0;
+  color: #8a8a8a;
+  font-size: .68rem;
+  letter-spacing: .04em;
+  line-height: 1.45;
+  text-transform: uppercase;
+}
+.book-cal-times h3 {
+  margin: 0 0 1rem;
+  font-family: var(--display);
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
 }
 
 .book-hero,
@@ -192,7 +177,57 @@
 .book-hero-lead { max-width: 34rem; }
 .book-panel { padding-top: 3.5rem; padding-bottom: 4rem; }
 .book-studio { padding-top: 3.5rem; padding-bottom: .5rem; }
-.book-studio .booking-cal { overflow-x: auto; }
+.book-studio-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 1.15rem;
+}
+.book-studio-card {
+  width: 33%;
+  flex: 0 0 calc(33.333% - .77rem);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  padding: 1.35rem 1.25rem 1.15rem;
+  border: 1px solid #2c2c2c;
+  background: #141414;
+  color: inherit;
+  text-align: left;
+}
+.book-studio-card:hover,
+.book-studio-card.open {
+  border-color: #e50914;
+}
+.book-studio-copy { flex: 1 1 auto; }
+.book-studio-action {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .4rem;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 1.35rem;
+  color: #e50914;
+  font-family: var(--display);
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.book-studio-arrow {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+.book-studio-calendar { margin-top: 1.5rem; scroll-margin-top: 5.5rem; }
+@media (max-width: 767.98px) {
+  .book-cal-layout { grid-template-columns: 1fr; gap: 1.5rem; }
+}
+@media (max-width: 991.98px) {
+  .book-studio-card { width: 100%; flex-basis: 100%; }
+}
 .book-label {
   color: #d7d3d1;
   font-family: var(--display);
@@ -319,16 +354,32 @@ textarea.book-field { min-height: 9rem; }
 .cal-tip-open { color: #3ddc97; }
 .cal-tip-full { color: #ffb4ab; }
 
-.hour-row { display: flex; flex-wrap: wrap; gap: .5rem; }
-.hour-chip {
-  border: 0;
-  background: #1c1b1b;
-  color: var(--copy);
-  padding: .7rem .85rem;
-  font-family: var(--display);
-  letter-spacing: .08em;
+.hour-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(4.5rem, 1fr));
+  gap: .45rem;
 }
-.hour-chip.selected { background: var(--red); color: var(--cream); }
+.hour-chip {
+  width: 100%;
+  border: 1px solid #2c2c2c;
+  background: #141414;
+  color: #f2f2f2;
+  padding: .7rem .35rem;
+  font-family: var(--display);
+  font-size: .78rem;
+  letter-spacing: .06em;
+}
+.hour-chip.booked {
+  background: #e10600;
+  border-color: #e10600;
+  color: #fff;
+}
+.hour-chip.selected:not(.booked) {
+  background: #fff;
+  border-color: #fff;
+  color: #111;
+}
+.hour-chip:disabled:not(.booked) { opacity: .35; }
 
 .choice-card {
   display: flex;
