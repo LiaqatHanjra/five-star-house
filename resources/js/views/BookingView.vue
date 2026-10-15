@@ -112,18 +112,28 @@ onMounted(async () => {
 
 <template>
   <div>
-    <section class="book-hero">
-      <img v-if="sidebar?.image_url" :alt="sidebar.alt || ''" :src="sidebar.image_url">
-      <div class="book-hero-shade"></div>
-      <div class="site-wrap book-hero-copy">
-        <div class="d-flex align-items-center gap-2 mb-3">
-          <span class="sq-2 bg-danger d-inline-block"></span>
-          <span class="type-overline text-uppercase ls-25 text-danger">{{ page.kicker || t('book.kicker') }}</span>
+    <section class="w-100 bg-dark py-xl py-lg-3xl">
+      <div class="site-wrap">
+        <div class="row g-4 g-lg-xl align-items-center">
+          <div class="col-lg-6 d-flex flex-column gap-3">
+            <div class="d-flex align-items-center gap-1">
+              <span class="sq-2 bg-danger d-inline-block" aria-hidden="true"></span>
+              <span class="type-overline text-uppercase ls-25 text-danger">{{ page.kicker || t('book.kicker') }}</span>
+            </div>
+            <h1 class="type-headline-mobile type-md-headline-lg text-uppercase lh-1 ls-tight">{{ page.title || t('book.title') }}</h1>
+            <p class="type-body-lg text-body-secondary max-w-xl pt-1 mb-0">{{ page.lead || t('book.lead') }}</p>
+          </div>
+          <div class="col-lg-6">
+            <div class="zoom-frame zoom-slow position-relative w-100 aspect-16x10 bg-body-secondary overflow-hidden shadow-2xl">
+              <div v-if="sidebar?.image_url" class="media-cover w-100 h-100" :style="{ backgroundImage: `url('${sidebar.image_url}')` }"></div>
+              <div class="overlay-fade position-absolute top-0 start-0 end-0 bottom-0 opacity-80"></div>
+              <div class="position-absolute bottom-0 start-0 end-0 m-3 d-flex align-items-center justify-content-between text-body-secondary type-label-sm">
+                <span class="bg-dark bg-opacity-80 px-2 py-1 text-uppercase ls-widest text-fixed">{{ sidebar?.category || t('services.stageFallback') }}</span>
+                <span class="text-uppercase text-body-tertiary ls-wider d-none d-sm-inline-block">{{ sidebar?.title || t('book.city') }}</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <h1 class="book-hero-title text-uppercase">{{ page.title || t('book.title') }}</h1>
-        <p class="type-body-lg text-body-secondary book-hero-lead mb-0">
-          {{ page.lead || t('book.lead') }}
-        </p>
       </div>
     </section>
 
@@ -227,14 +237,27 @@ onMounted(async () => {
       </div>
     </section>
 
-    <section class="book-band">
-      <img v-if="banner?.image_url" :alt="banner.alt || ''" :src="banner.image_url">
-      <div class="book-band-shade"></div>
-      <div class="site-wrap book-band-copy">
-        <p class="book-band-brand text-uppercase mb-2">Five Star House</p>
-        <div class="d-flex flex-wrap justify-content-between gap-2">
-          <p class="type-overline text-uppercase ls-20 text-danger mb-0">{{ t('footer.tagline') }}</p>
-          <p class="type-overline text-uppercase ls-20 mb-0">{{ t('book.city') }}</p>
+    <section class="w-100 py-xl py-lg-3xl">
+      <div class="site-wrap">
+        <div class="row g-4 g-lg-xl align-items-center">
+          <div class="col-lg-6 d-flex flex-column gap-3">
+            <div class="d-flex align-items-center gap-1">
+              <span class="sq-2 bg-danger d-inline-block" aria-hidden="true"></span>
+              <span class="type-overline text-uppercase ls-25 text-danger">{{ banner?.category || t('footer.tagline') }}</span>
+            </div>
+            <h2 class="type-headline-mobile type-md-headline-lg text-uppercase lh-1 ls-tight">{{ banner?.title || 'Five Star House' }}</h2>
+            <p class="type-body-lg text-body-secondary max-w-xl mb-0">{{ banner?.caption || t('book.city') }}</p>
+          </div>
+          <div class="col-lg-6">
+            <div class="zoom-frame zoom-slow position-relative w-100 aspect-16x10 bg-body-secondary overflow-hidden shadow-2xl">
+              <div v-if="banner?.image_url" class="media-cover w-100 h-100" :style="{ backgroundImage: `url('${banner.image_url}')` }"></div>
+              <div class="overlay-fade position-absolute top-0 start-0 end-0 bottom-0 opacity-80"></div>
+              <div class="position-absolute bottom-0 start-0 end-0 m-3 d-flex align-items-center justify-content-between text-body-secondary type-label-sm">
+                <span class="bg-dark bg-opacity-80 px-2 py-1 text-uppercase ls-widest text-fixed">{{ banner?.category || t('services.stageFallback') }}</span>
+                <span class="text-uppercase text-body-tertiary ls-wider d-none d-sm-inline-block">{{ banner?.title || t('book.city') }}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
