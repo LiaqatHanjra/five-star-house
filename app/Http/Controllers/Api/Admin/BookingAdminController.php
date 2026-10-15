@@ -17,7 +17,9 @@ class BookingAdminController extends Controller
     {
         $bookings = Booking::query()
             ->with(['payment', 'service'])
-            ->whereNotNull('booking_date')
+            ->where(function ($query) {
+                $query->whereNotNull('booking_date')->orWhere('booking_kind', 'project');
+            })
             ->latest()
             ->get()
             ->map->toPublicArray();

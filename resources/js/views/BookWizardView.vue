@@ -64,12 +64,33 @@ const backTo = computed(() => (route.params.slug && !props.embedded ? `/services
 const monthKey = computed(() => `${cursor.value.getFullYear()}-${String(cursor.value.getMonth() + 1).padStart(2, '0')}`)
 const monthLabel = computed(() => cursor.value.toLocaleDateString(dateLocale(), { month: 'long', year: 'numeric' }))
 const weekdays = computed(() => t('calendar.weekdays'))
+const weekLabels = computed(() => t('calendar.weeks'))
 
-const days = computed(() => {
+function clockLabel(value) {
+  const raw = String(value || '').slice(0, 5)
+  if (locale.value === 'fr') return raw
+  const [hourText, minuteText] = raw.split(':')
+  let hour = Number(hourText)
+  const minute = Number(minuteText || 0)
+  if (Number.isNaN(hour)) return raw
+  const suffix = hour >= 12 ? 'PM' : 'AM'
+  hour = hour % 12 || 12
+  if (!minute) return `${hour}${suffix}`
+  return `${hour}:${String(minute).padStart(2, '0')} ${suffix}`
+}
+
+function bookingNotes(bookings) {
+  return bookings.slice(0, 2).map((booking) => ({
+    name: booking.status === 'busy' ? '' : String(booking.name || '').split(' ').slice(0, 2).join(' '),
+    range: `${clockLabel(booking.start)} - ${clockLabel(booking.end)}`,
+  }))
+}
+
+const weeks = computed(() => {
   const year = cursor.value.getFullYear()
   const month = cursor.value.getMonth()
   const first = new Date(year, month, 1)
-  const startPad = first.getDay()
+  const startPad = (first.getDay() + 6) % 7
   const count = new Date(year, month + 1, 0).getDate()
   const cells = []
   for (let i = 0; i < startPad; i += 1) cells.push({ outside: true })
@@ -79,15 +100,30 @@ const days = computed(() => {
     const date = new Date(year, month, day)
     const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
     const bookings = Array.isArray(marks.value[iso]) ? marks.value[iso] : []
+    const open = Number(freeHours.value[iso] ?? 0)
     cells.push({
       iso,
       label: day,
       past: date < today,
       bookings,
-      freeHours: Number(freeHours.value[iso] ?? 0),
+      notes: bookingNotes(bookings),
+      freeHours: open,
+      full: bookings.length > 0 && open === 0,
     })
   }
-  return cells
+  while (cells.length % 7 !== 0) cells.push({ outside: true })
+  const rows = []
+  for (let index = 0; index < cells.length; index += 7) rows.push(cells.slice(index, index + 7))
+  return rows
+})
+
+const rateNote = computed(() => {
+  if (!quote.value) return ''
+  const min = quote.value.minimum_hours || windowInfo.value.minimum_hours || 1
+  if (isService.value && (selectedUnit.value === 'day' || selectedUnit.value === 'project')) return quoteLine.value
+  return tp('calendar.rate', min, {
+    rate: formatMoney(quote.value.hourly_rate, quote.value.currency),
+  })
 })
 
 const maxHours = computed(() => {
@@ -269,38 +305,55 @@ onMounted(async () => {
     </div>
     <p v-if="embedded && quoteLine" class="type-body-md text-primary mb-0">{{ quoteLine }}</p>
 
-    <div v-if="showCalendar" class="row g-4">
-      <div class="col-lg-5">
-        <div class="bg-dark p-3 p-md-4 d-flex flex-column gap-3">
-          <div class="d-flex justify-content-between align-items-center">
-            <button class="btn btn-secondary btn-quote" type="button" @click="shiftMonth(-1)">{{ t('calendar.prev') }}</button>
-            <span class="type-label-md text-uppercase">{{ monthLabel }}</span>
-            <button class="btn btn-secondary btn-quote" type="button" @click="shiftMonth(1)">{{ t('calendar.next') }}</button>
-          </div>
-          <div class="cal-head">
-            <span v-for="(name, index) in weekdays" :key="index">{{ name }}</span>
-          </div>
-          <div class="cal-grid">
-            <span v-for="(day, index) in days" :key="index" class="cal-cell">
-              <button
-                class="cal-day"
-                :class="{ outside: day.outside, past: day.past && !day.bookings?.length, booked: day.bookings?.length, selected: day.iso === selectedDate }"
-                :disabled="day.outside || (day.past && !day.bookings?.length)"
-                type="button"
-                @click="selectDate(day)"
-              >{{ day.label }}</button>
-              <span v-if="day.bookings?.length" class="cal-tip" :class="day.freeHours ? 'is-open' : 'is-full'">
-                <span class="cal-tip-item" :class="day.freeHours ? 'cal-tip-open' : 'cal-tip-full'">
-                  {{ day.freeHours ? tp('wizard.slotAvailable', day.freeHours) : t('wizard.slotFull') }}
-                </span>
-              </span>
-            </span>
-          </div>
-          <p class="type-body-sm text-body-tertiary mb-0">{{ t('wizard.bookedHint') }}</p>
+    <div v-if="showCalendar" class="d-flex flex-column gap-4">
+      <div class="booking-cal">
+        <div class="booking-cal-kicker">
+          <span class="booking-cal-mark"></span>
+          <span>{{ t('calendar.title') }}</span>
         </div>
+        <div class="booking-cal-nav">
+          <button class="booking-cal-arrow" type="button" :aria-label="t('calendar.prev')" @click="shiftMonth(-1)">‹</button>
+          <strong>{{ monthLabel }}</strong>
+          <button class="booking-cal-arrow" type="button" :aria-label="t('calendar.next')" @click="shiftMonth(1)">›</button>
+        </div>
+        <div class="booking-cal-scroll">
+          <div class="booking-cal-sheet">
+            <div class="booking-cal-head">
+              <span>{{ t('calendar.date') }}</span>
+              <span v-for="(name, index) in weekdays" :key="index">{{ name }}</span>
+            </div>
+            <div v-for="(week, weekIndex) in weeks" :key="weekIndex" class="booking-cal-row">
+              <div class="cal-week">{{ weekLabels[weekIndex] }}</div>
+              <div v-for="(day, dayIndex) in week" :key="dayIndex" class="cal-cell" :class="{ 'is-blank': day.outside }">
+                <button
+                  v-if="!day.outside"
+                  class="cal-day"
+                  :class="{ past: day.past && !day.bookings?.length, 'booked-full': day.full, 'booked-part': day.bookings?.length && !day.full, selected: day.iso === selectedDate }"
+                  :disabled="day.past && !day.bookings?.length"
+                  type="button"
+                  @click="selectDate(day)"
+                >
+                  <span class="cal-num">{{ day.label }}</span>
+                  <span v-if="day.bookings?.length && !day.full" class="cal-flag"></span>
+                  <span v-for="(note, noteIndex) in day.notes" :key="noteIndex" class="cal-note">
+                    <span v-if="note.name">{{ note.name }}</span>
+                    <span>{{ note.range }}</span>
+                  </span>
+                </button>
+                <span v-if="day.bookings?.length" class="cal-tip" :class="day.freeHours ? 'is-open' : 'is-full'">
+                  <span class="cal-tip-item" :class="day.freeHours ? 'cal-tip-open' : 'cal-tip-full'">
+                    {{ day.freeHours ? tp('wizard.slotAvailable', day.freeHours) : t('wizard.slotFull') }}
+                  </span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p v-if="rateNote" class="booking-cal-rate">{{ rateNote }}</p>
+        <p class="booking-cal-hint">{{ t('wizard.bookedHint') }}</p>
       </div>
 
-      <div class="col-lg-7 d-flex flex-column gap-4">
+      <div class="d-flex flex-column gap-4">
         <div v-if="selectedDate && byHour" class="bg-dark p-3 p-md-4">
           <h2 class="type-headline-sm text-uppercase mb-3">{{ t('wizard.chooseStart', { date: selectedDate }) }}</h2>
           <div class="hour-row">

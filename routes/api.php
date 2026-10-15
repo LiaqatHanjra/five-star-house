@@ -22,6 +22,7 @@ Route::get('/seo', [SeoController::class, 'show']);
 Route::get('/availability', [BookingController::class, 'availability']);
 Route::post('/quotes', [BookingController::class, 'quote']);
 Route::post('/bookings', [BookingController::class, 'store']);
+Route::post('/project-requests', [BookingController::class, 'inquire'])->middleware('throttle:8,1');
 Route::get('/bookings/{reference}', [BookingController::class, 'show']);
 Route::post('/bookings/{reference}/pay', [BookingController::class, 'pay']);
 Route::get('/bookings/{reference}/payment/verify', [BookingController::class, 'verifyPayment']);

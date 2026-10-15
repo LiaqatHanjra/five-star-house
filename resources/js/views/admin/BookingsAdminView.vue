@@ -34,10 +34,11 @@ onMounted(load)
           <h2 class="type-headline-sm text-uppercase mb-1">{{ booking.full_name }}</h2>
           <p class="type-body-sm text-body-secondary mb-0">{{ booking.email }} <span v-if="booking.phone">· {{ booking.phone }}</span></p>
         </div>
-        <span class="status-pill">{{ booking.status }} · {{ booking.payment_status || 'unpaid' }}</span>
+        <span class="status-pill">{{ booking.status }}<span v-if="booking.payment_status"> · {{ booking.payment_status }}</span></span>
       </div>
       <p class="type-body-md mb-0">{{ booking.project_type }} <span v-if="booking.event_title">· {{ booking.event_title }}</span></p>
-      <p class="type-body-md text-body-secondary mb-0">{{ booking.booking_date }} · {{ booking.start_time }}–{{ booking.end_time }} · {{ booking.hours }} hours · {{ formatMoney(booking.amount) }}</p>
+      <p v-if="booking.booking_date" class="type-body-md text-body-secondary mb-0">{{ booking.booking_date }} · {{ booking.start_time }}–{{ booking.end_time }} · {{ booking.hours }} hours · {{ formatMoney(booking.amount) }}</p>
+      <p v-else class="type-body-md text-body-secondary mb-0">Project request</p>
       <p v-if="booking.message" class="type-body-sm text-body-tertiary mb-0">{{ booking.message }}</p>
       <div class="d-flex gap-2">
         <button class="btn btn-secondary btn-quote" type="button" @click="setStatus(booking, 'cancelled')">Cancel</button>

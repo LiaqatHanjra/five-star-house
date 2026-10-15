@@ -8,6 +8,9 @@ const form = reactive({
   owner_email_secondary: 'vladimirphilogene@gmail.com',
   phone: '',
   address: '',
+  instagram_url: '',
+  youtube_url: '',
+  vimeo_url: '',
   open_time: '09:00',
   close_time: '19:00',
   minimum_hours: 1,
@@ -82,6 +85,18 @@ async function save() {
     <label class="d-flex flex-column gap-1">
       <span class="type-label-sm text-uppercase">Address</span>
       <input v-model="form.address" class="form-control">
+    </label>
+    <label class="d-flex flex-column gap-1">
+      <span class="type-label-sm text-uppercase">Instagram URL</span>
+      <input v-model="form.instagram_url" class="form-control" placeholder="https://">
+    </label>
+    <label class="d-flex flex-column gap-1">
+      <span class="type-label-sm text-uppercase">YouTube URL</span>
+      <input v-model="form.youtube_url" class="form-control" placeholder="https://">
+    </label>
+    <label class="d-flex flex-column gap-1">
+      <span class="type-label-sm text-uppercase">Vimeo URL</span>
+      <input v-model="form.vimeo_url" class="form-control" placeholder="https://">
     </label>
     <div class="row g-3">
       <div class="col-md-4 d-flex flex-column gap-1">

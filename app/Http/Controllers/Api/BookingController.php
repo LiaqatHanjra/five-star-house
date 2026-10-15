@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Mail\BookingConfirmed;
+use App\Mail\ProjectRequest;
 use App\Models\Booking;
 use App\Models\Customer;
 use App\Models\Payment;
@@ -35,7 +36,8 @@ class BookingController extends Controller
     {
         $pairs = SiteSetting::allPairs();
         $public = [
-            'owner_name', 'phone', 'address', 'open_time', 'close_time',
+            'owner_name', 'owner_email', 'phone', 'address', 'open_time', 'close_time',
+            'instagram_url', 'youtube_url', 'vimeo_url',
             'minimum_hours', 'studio_minimum_hours', 'currency',
             'studio_hourly_rate', 'event_hourly_rate', 'owner_hourly_rate',
         ];
@@ -204,6 +206,48 @@ class BookingController extends Controller
         return response()->json([
             'booking' => $booking->toPublicArray(),
             'payment' => $payment->toPublicArray(),
+        ], 201);
+    }
+
+    public function inquire(Request $request)
+    {
+        $data = $request->validate([
+            'full_name' => ['required', 'string', 'max:120'],
+            'email' => ['required', 'email', 'max:180'],
+            'service_id' => ['required', 'integer', 'exists:services,id'],
+            'message' => ['required', 'string', 'max:5000'],
+        ]);
+
+        $service = Service::query()->where('is_active', true)->find($data['service_id']);
+        if (! $service) {
+            return response()->json(['message' => 'Choose a project type.'], 422);
+        }
+
+        Customer::query()->updateOrCreate(
+            ['email' => $data['email']],
+            ['name' => $data['full_name']]
+        );
+
+        $booking = Booking::create([
+            'reference' => $this->reference(),
+            'booking_kind' => 'project',
+            'full_name' => $data['full_name'],
+            'email' => $data['email'],
+            'address' => '',
+            'service_id' => $service->id,
+            'project_type' => $service->title,
+            'message' => $data['message'],
+            'timeline' => now()->toDateString(),
+            'budget' => 'inquiry',
+            'hours' => 0,
+            'hourly_rate' => 0,
+            'amount' => 0,
+            'status' => 'new',
+        ]);
+
+        return response()->json([
+            'booking' => $booking->toPublicArray(),
+            'mailed' => $this->notifyInquiry($booking),
         ], 201);
     }
 
@@ -569,6 +613,36 @@ class BookingController extends Controller
         if ($owners !== []) {
             Mail::to($owners)->send(new BookingConfirmed($booking, 'owner'));
         }
+    }
+
+    private function notifyInquiry(Booking $booking): bool
+    {
+        $sent = true;
+
+        try {
+            Mail::to($booking->email)->send(new ProjectRequest($booking, 'customer'));
+        } catch (\Throwable $exception) {
+            report($exception);
+            $sent = false;
+        }
+
+        $owners = array_values(array_unique(array_filter([
+            SiteSetting::getValue('owner_email', 'studiofivestarmtl@gmail.com'),
+            SiteSetting::getValue('owner_email_secondary', 'vladimirphilogene@gmail.com'),
+        ])));
+
+        if ($owners === []) {
+            return false;
+        }
+
+        try {
+            Mail::to($owners)->send(new ProjectRequest($booking, 'owner'));
+        } catch (\Throwable $exception) {
+            report($exception);
+            $sent = false;
+        }
+
+        return $sent;
     }
 
     private function flatService(array $data): bool

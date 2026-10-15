@@ -37,9 +37,9 @@ class BookingPageContent
     {
         return [
             'en' => [
-                'kicker' => 'Book the house',
-                'title' => 'Choose a booking',
-                'lead' => 'Rent the studio by the hour, book it for an event, or book the owner. Studio rental starts at one hour. Taken hours show on the calendar.',
+                'kicker' => 'Book a project',
+                'title' => "Let's work together",
+                'lead' => "Have a project in mind? Tell us about it. We'll get back to you as soon as possible.",
                 'hint' => 'Looking for a listed service? Open it from the services page and use Book this service.',
                 'studio_kicker' => 'Studio rental',
                 'studio_title' => 'Rent the studio',
@@ -52,9 +52,9 @@ class BookingPageContent
                 'owner_copy' => 'The owner directs, shoots, or hosts. Minimum {n} {unit}.',
             ],
             'fr' => [
-                'kicker' => 'Réserver la maison',
-                'title' => 'Choisir une réservation',
-                'lead' => 'Louez le studio à l’heure, réservez-le pour un événement, ou réservez le propriétaire. La location du studio commence à une heure. Les heures prises apparaissent sur le calendrier.',
+                'kicker' => 'Réserver un projet',
+                'title' => 'Travaillons ensemble',
+                'lead' => 'Un projet en tête? Parlez-nous-en. Nous vous répondrons dès que possible.',
                 'hint' => 'Vous cherchez un service au catalogue? Ouvrez-le depuis la page Services et utilisez Réserver ce service.',
                 'studio_kicker' => 'Location de studio',
                 'studio_title' => 'Louer le studio',

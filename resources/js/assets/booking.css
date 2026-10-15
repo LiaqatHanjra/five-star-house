@@ -1,45 +1,269 @@
-.cal-head, .cal-grid {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: .35rem;
+.booking-cal {
+  background: #fff;
+  color: #111;
+  padding: 1.15rem 1.15rem 1rem;
 }
-
-.cal-head span,
-.cal-day {
-  text-align: center;
+.booking-cal-kicker {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  color: #e10600;
   font-family: var(--display);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
 }
-
-.cal-head span {
-  color: var(--outline);
-  font-size: .68rem;
-  letter-spacing: .12em;
+.booking-cal-mark {
+  width: .55rem;
+  height: .55rem;
+  background: #e10600;
+  flex: 0 0 auto;
 }
-
-.cal-day {
-  min-height: 2.8rem;
+.booking-cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.35rem;
+  margin: .7rem 0 .95rem;
+}
+.booking-cal-nav strong {
+  font-family: var(--display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.booking-cal-arrow {
   border: 0;
-  background: #1c1b1b;
-  color: var(--copy);
+  background: transparent;
+  color: #111;
+  font-size: 1.45rem;
+  line-height: 1;
+  padding: 0 .2rem;
 }
+.booking-cal-scroll { overflow-x: auto; }
+.booking-cal-sheet { min-width: 720px; }
+.booking-cal-head,
+.booking-cal-row {
+  display: grid;
+  grid-template-columns: 6.4rem repeat(7, minmax(0, 1fr));
+}
+.booking-cal-sheet {
+  border-top: 1px solid #e6e6e6;
+  border-left: 1px solid #e6e6e6;
+}
+.booking-cal-head span,
+.booking-cal-row > * {
+  border-right: 1px solid #e6e6e6;
+  border-bottom: 1px solid #e6e6e6;
+  background: #fff;
+}
+.booking-cal-head span,
+.cal-week {
+  display: flex;
+  align-items: center;
+  min-height: 2.35rem;
+  padding: .4rem .55rem;
+  font-family: var(--display);
+  font-size: .78rem;
+  font-weight: 700;
+  color: #111;
+}
+.booking-cal-head span:not(:first-child) { justify-content: center; }
 
 .cal-cell,
 .hour-wrap { position: relative; }
-.cal-cell .cal-day { width: 100%; }
+.cal-cell { display: flex; min-height: 5.5rem; }
+.cal-cell.is-blank { min-height: 5.5rem; }
 .cal-cell:hover,
 .hour-wrap:hover { z-index: 6; }
-
-.cal-day.outside { visibility: hidden; }
-.cal-day.past { opacity: .35; }
-.cal-day.booked,
+.booking-cal .cal-day {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .12rem;
+  width: 100%;
+  min-height: 5.5rem;
+  margin: 0;
+  padding: .4rem .4rem .45rem;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  color: #111;
+  text-align: left;
+  font-family: var(--display);
+  line-height: 1.15;
+}
+.booking-cal .cal-num {
+  font-size: .95rem;
+  font-weight: 700;
+}
+.booking-cal .cal-flag {
+  position: absolute;
+  top: .45rem;
+  right: .4rem;
+  width: .5rem;
+  height: .5rem;
+  background: #e10600;
+}
+.booking-cal .cal-note {
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+  font-family: var(--body);
+  font-size: .62rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.booking-cal .cal-day.past { color: #b0b0b0; }
+.booking-cal .cal-day.booked-part { color: #111; }
+.booking-cal .cal-day.booked-full,
 .hour-chip.booked {
-  background: var(--red);
-  color: var(--cream);
+  background: #e10600;
+  color: #fff;
   opacity: 1;
   text-decoration: none;
 }
-.cal-day.selected { background: var(--red); color: var(--cream); }
-.cal-day.booked.selected { outline: 2px solid var(--cream); outline-offset: -3px; }
+.booking-cal .cal-day.selected:not(.booked-full) { box-shadow: inset 0 0 0 2px #e10600; }
+.booking-cal .cal-day.booked-full.selected { box-shadow: inset 0 0 0 2px #111; }
+.booking-cal .cal-day:disabled { cursor: default; }
+
+.booking-cal-rate {
+  margin: .85rem 0 0;
+  color: #111;
+  font-family: var(--display);
+  font-size: .98rem;
+  font-weight: 700;
+}
+.booking-cal-hint {
+  margin: .25rem 0 0;
+  color: #6b6b6b;
+  font-size: .75rem;
+}
+
+.book-hero,
+.book-band {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  min-height: 28rem;
+  background: #0c0c0c;
+  overflow: hidden;
+}
+.book-band { min-height: 18rem; align-items: flex-end; }
+.book-hero img,
+.book-band img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.book-hero-shade,
+.book-band-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(0, 0, 0, .88) 0%, rgba(0, 0, 0, .55) 48%, rgba(0, 0, 0, .25) 100%);
+}
+.book-band-shade {
+  background: linear-gradient(180deg, rgba(0, 0, 0, .15) 0%, rgba(0, 0, 0, .72) 100%);
+}
+.book-hero-copy,
+.book-band-copy {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding-top: 4.5rem;
+  padding-bottom: 3rem;
+}
+.book-hero-title {
+  max-width: 16ch;
+  margin: 0 0 1rem;
+  font-family: var(--display);
+  font-size: clamp(3rem, 6vw, 5.4rem);
+  font-weight: 700;
+  letter-spacing: -.03em;
+  line-height: .9;
+}
+.book-hero-lead { max-width: 34rem; }
+.book-panel { padding-top: 3.5rem; padding-bottom: 4rem; }
+.book-label {
+  color: #d7d3d1;
+  font-family: var(--display);
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.book-field {
+  background: #141414 !important;
+  border: 1px solid #2c2c2c !important;
+  border-radius: 2px !important;
+  min-height: 3.1rem;
+}
+textarea.book-field { min-height: 9rem; }
+.book-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%23e50914' d='M1 1l5 5 5-5'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 1rem center !important;
+  background-size: .7rem !important;
+}
+.book-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .75rem;
+  width: 100%;
+  min-height: 3.2rem;
+  margin-top: .5rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.book-city {
+  font-family: var(--display);
+  font-size: .95rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.book-contact-line,
+.book-social {
+  display: flex;
+  align-items: flex-start;
+  gap: .7rem;
+  color: #f3f0ef;
+  text-decoration: none;
+}
+.book-contact-line svg,
+.book-icon {
+  width: 1rem;
+  height: 1rem;
+  margin-top: .15rem;
+  fill: none;
+  stroke: #e50914;
+  stroke-width: 1.6;
+  flex: 0 0 auto;
+}
+.book-social { align-items: center; }
+.book-social-icon {
+  width: 1.15rem;
+  height: 1.15rem;
+  fill: #e50914;
+  stroke: none;
+  flex: 0 0 auto;
+}
+.book-band-brand {
+  font-family: var(--display);
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  font-weight: 700;
+  letter-spacing: .04em;
+  line-height: 1;
+}
 
 .cal-tip {
   display: none;
