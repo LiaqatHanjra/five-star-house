@@ -42,33 +42,35 @@ onMounted(async () => {
     <div class="site-wrap">
     <p v-if="error" class="type-body-md text-danger">{{ error }}</p>
     <div class="row g-4 g-lg-xl page-banner-grid">
-      <div class="col-lg-6 page-banner-copy z-1">
-        <div class="d-flex align-items-center gap-1">
-          <span class="sq-2 bg-danger d-inline-block" aria-hidden="true"></span>
-          <span class="type-overline text-uppercase ls-25 text-danger">{{ t('home.kicker') }}</span>
-        </div>
-        <h1 class="page-banner-title">
-          <template v-for="(line, index) in intro.lines" :key="index">
-            {{ line }}<br v-if="index < intro.lines.length - 1">
-          </template>
-        </h1>
-        <p class="page-banner-lead text-body-secondary">
-          {{ intro.description }}
-        </p>
-        <div v-if="intro.tags.length" class="d-flex flex-wrap align-items-center gap-3 mb-xl">
-          <div v-for="tag in intro.tags" :key="tag" class="d-flex align-items-center gap-1 text-body-secondary type-label-sm text-uppercase">
-            <span class="material-symbols-outlined text-danger icon-16" aria-hidden="true">check_circle</span>
-            <span>{{ tag }}</span>
+      <div class="col-lg-6 page-banner-copy home-banner-copy z-1">
+        <div class="home-banner-stage">
+          <div class="d-flex align-items-center gap-1">
+            <span class="sq-2 bg-danger d-inline-block" aria-hidden="true"></span>
+            <span class="type-overline text-uppercase ls-25 text-danger">{{ t('home.kicker') }}</span>
           </div>
-        </div>
-        <div class="d-flex flex-wrap align-items-center gap-3">
-          <a class="btn btn-danger btn-pad" href="#showcase">
-            <span>{{ intro.button }}</span>
-            <span class="material-symbols-outlined icon-18" aria-hidden="true">arrow_forward</span>
-          </a>
-          <RouterLink class="btn btn-secondary btn-pad" to="/book">
-            <span>{{ intro.buttonSecondary }}</span>
-          </RouterLink>
+          <h1 class="page-banner-title">
+            <template v-for="(line, index) in intro.lines" :key="index">
+              {{ line }}<br v-if="index < intro.lines.length - 1">
+            </template>
+          </h1>
+          <p class="page-banner-lead text-body-secondary">
+            {{ intro.description }}
+          </p>
+          <div v-if="intro.tags.length" class="d-flex flex-wrap align-items-center gap-3">
+            <div v-for="tag in intro.tags" :key="tag" class="d-flex align-items-center gap-1 text-body-secondary type-label-sm text-uppercase">
+              <span class="material-symbols-outlined text-danger icon-16" aria-hidden="true">check_circle</span>
+              <span>{{ tag }}</span>
+            </div>
+          </div>
+          <div class="home-banner-actions">
+            <a class="btn btn-danger btn-pad" href="#showcase">
+              <span>{{ intro.button }}</span>
+              <span class="material-symbols-outlined icon-18" aria-hidden="true">arrow_forward</span>
+            </a>
+            <RouterLink class="btn btn-secondary btn-pad" to="/book">
+              <span>{{ intro.buttonSecondary }}</span>
+            </RouterLink>
+          </div>
         </div>
         <div class="metric-ribbon w-100 pt-2xl mt-2xl p-3 rounded-1">
           <div class="row g-3">
