@@ -1,3 +1,5 @@
+@import './fonts.css';
+
 :root {
   color-scheme: dark;
   --bs-body-bg: #131313;
@@ -41,7 +43,7 @@
   --cream: #fff7f6;
   --on-salmon: #690003;
   --line: #353534;
-  --display: "Inter", sans-serif;
+  --display: "Space Grotesk", sans-serif;
   --body: "Inter", sans-serif;
 }
 
@@ -77,7 +79,24 @@ html { scrollbar-width: none; scroll-padding-top: 5rem; }
   line-height: 1;
   vertical-align: middle;
   user-select: none;
+  width: 1em;
+  min-width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+  overflow: hidden;
 }
+
+.font-icons-unavailable .material-symbols-outlined { visibility: hidden; }
+.font-icons-unavailable .nav-toggle { position: relative; }
+.font-icons-unavailable .nav-toggle::after {
+  content: '≡';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font: 1.5rem/1 system-ui, sans-serif;
+}
+.font-icons-unavailable .nav-toggle[aria-expanded="true"]::after { content: '×'; }
 
 .icon-10 { font-size: 10px !important; }
 .icon-16 { font-size: 16px !important; }
