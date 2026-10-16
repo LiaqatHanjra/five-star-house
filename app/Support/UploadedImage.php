@@ -8,7 +8,7 @@ use RuntimeException;
 
 class UploadedImage
 {
-    public static function test(?UploadedFile $file, ?string $current, ?string $fallback = null): ?string
+    public static function replace(?UploadedFile $file, ?string $current, ?string $fallback = null): ?string
     {
         if (! $file) {
             return $fallback !== null && $fallback !== '' ? $fallback : $current;
@@ -20,19 +20,10 @@ class UploadedImage
             throw new RuntimeException('The image could not be stored on the public disk.');
         }
 
-        // if ($current) {
-        //     $urlPrefix = rtrim($disk->url(''), '/').'/';
-        //     if (str_starts_with($current, $urlPrefix)) {
-        //         $disk->delete(substr($current, strlen($urlPrefix)));
-        //     } elseif (str_starts_with($current, '/storage/uploads/')) {
-        //         $disk->delete(substr($current, strlen('/storage/')));
-        //     }
-        // }
-
         return $disk->url($path);
     }
 
-    public static function replace(
+    public static function test(
         ?UploadedFile $file,
         ?string $current,
         ?string $fallback = null
