@@ -16,8 +16,8 @@ class ServicesPageContent
                 'description' => 'From concept to final cut, we handle every step of the process. Whether you need a full production, clean visuals, or an agile creative partner, we bring the right team, industry-grade tools, and seasoned experience to realize your vision.',
                 'tags' => [
                     'Full-spectrum production',
-                    'ARRI & RED ecosystem',
-                    '1600 sq ft cyclorama',
+                    'Infinity Cove Cyclorama',
+                    '1600 sq ft studio',
                 ],
             ],
             'fr' => [
