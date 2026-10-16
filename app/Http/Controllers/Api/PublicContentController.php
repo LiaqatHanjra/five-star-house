@@ -5,28 +5,43 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Service;
 use App\Models\SiteImage;
+use App\Support\BookingPageContent;
 use App\Support\HomePageContent;
 use App\Support\ServicesPageContent;
 
 class PublicContentController extends Controller
 {
+    public function homeBanner()
+    {
+        $hero = SiteImage::query()
+            ->where('page', 'home')
+            ->where('slot', 'hero')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->first();
+
+        return response()->json([
+            'hero' => $hero?->toPublicArray(),
+            'page' => HomePageContent::resolved(),
+        ]);
+    }
+
     public function home()
     {
-        $images = SiteImage::query()
+        $works = SiteImage::query()
             ->where('page', 'home')
+            ->where('slot', 'gallery')
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->get();
 
         return response()->json([
-            'hero' => $images->firstWhere('slot', 'hero')?->toPublicArray(),
-            'works' => $images->where('slot', 'gallery')->values()->map->toPublicArray(),
+            'works' => $works->map->toPublicArray()->values(),
             'services' => $this->activeServices(),
-            'page' => HomePageContent::resolved(),
         ]);
     }
 
-    public function services()
+    public function servicesBanner()
     {
         $banner = SiteImage::query()
             ->where('page', 'services')
@@ -37,6 +52,12 @@ class PublicContentController extends Controller
         return response()->json([
             'banner' => $banner?->toPublicArray(),
             'page' => ServicesPageContent::resolved(),
+        ]);
+    }
+
+    public function services()
+    {
+        return response()->json([
             'services' => $this->activeServices(),
         ]);
     }
@@ -48,18 +69,36 @@ class PublicContentController extends Controller
         return response()->json(['service' => $service->toPublicArray()]);
     }
 
-    public function booking()
+    public function bookingBanner()
     {
         $images = SiteImage::query()
             ->where('page', 'booking')
             ->where('is_active', true)
+            ->whereIn('slot', ['sidebar', 'banner'])
             ->orderBy('sort_order')
             ->get()
             ->keyBy('slot');
 
+        $content = BookingPageContent::resolved();
+        $page = [];
+        foreach (BookingPageContent::LOCALES as $locale) {
+            $page[$locale] = [
+                'kicker' => $content[$locale]['kicker'] ?? '',
+                'title' => $content[$locale]['title'] ?? '',
+                'lead' => $content[$locale]['lead'] ?? '',
+            ];
+        }
+
         return response()->json([
+            'page' => $page,
             'sidebar' => $images->get('sidebar')?->toPublicArray(),
             'banner' => $images->get('banner')?->toPublicArray(),
+        ]);
+    }
+
+    public function booking()
+    {
+        return response()->json([
             'services' => Service::query()
                 ->where('is_active', true)
                 ->orderBy('sort_order')

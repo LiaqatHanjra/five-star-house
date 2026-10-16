@@ -6,6 +6,7 @@ import BookWizardView from './BookWizardView.vue'
 
 const settings = ref({})
 const content = ref(null)
+const bannerPage = ref(null)
 const sidebar = ref(null)
 const banner = ref(null)
 const services = ref([])
@@ -14,7 +15,6 @@ const error = ref('')
 const result = ref(null)
 const showStudio = ref('')
 const studioPanel = ref(null)
-const ready = ref(false)
 
 function fillCopy(text, hours) {
   return String(text || '')
@@ -55,21 +55,18 @@ const form = reactive({
   message: '',
 })
 
-const page = computed(() => content.value?.[locale.value] || {})
-
 const heroCopy = computed(() => {
-  if (!ready.value) return { kicker: '', title: '', lead: '', label: '', caption: '' }
+  const text = bannerPage.value?.[locale.value] || {}
   return {
-    kicker: page.value.kicker || t('book.kicker'),
-    title: page.value.title || t('book.title'),
-    lead: page.value.lead || t('book.lead'),
+    kicker: text.kicker || t('book.kicker'),
+    title: text.title || t('book.title'),
+    lead: text.lead || t('book.lead'),
     label: sidebar.value?.category || t('services.stageFallback'),
     caption: sidebar.value?.title || t('book.city'),
   }
 })
 
 const bannerCopy = computed(() => {
-  if (!ready.value) return { kicker: '', title: '', lead: '', label: '', caption: '' }
   return {
     kicker: banner.value?.category || t('footer.tagline'),
     title: banner.value?.title || 'Five Star House',
@@ -121,6 +118,11 @@ async function submit() {
 }
 
 onMounted(async () => {
+  const bannerData = await api('/api/booking/banner')
+  bannerPage.value = bannerData.page || null
+  sidebar.value = bannerData.sidebar || null
+  banner.value = bannerData.banner || null
+
   try {
     const [studio, booking] = await Promise.all([
       api('/api/studio'),
@@ -128,11 +130,9 @@ onMounted(async () => {
     ])
     settings.value = studio.settings || {}
     content.value = studio.content || null
-    sidebar.value = booking.sidebar || null
-    banner.value = booking.banner || null
     services.value = booking.services || []
-  } finally {
-    ready.value = true
+  } catch (e) {
+    services.value = []
   }
 })
 </script>

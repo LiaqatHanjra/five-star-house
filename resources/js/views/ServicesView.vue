@@ -31,10 +31,16 @@ onUnmounted(() => {
 
 onMounted(async () => {
   try {
+    const bannerData = await api('/api/services/banner')
+    banner.value = bannerData.banner
+    pageCopy.value = bannerData.page || null
+  } catch (e) {
+    failed.value = true
+  }
+
+  try {
     const data = await api('/api/services')
-    banner.value = data.banner
-    pageCopy.value = data.page || null
-    services.value = data.services
+    services.value = data.services || []
   } catch (e) {
     failed.value = true
   }

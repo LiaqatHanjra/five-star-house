@@ -13,9 +13,12 @@ use App\Http\Controllers\Api\PublicContentController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 
+Route::get('/home/banner', [PublicContentController::class, 'homeBanner']);
 Route::get('/home', [PublicContentController::class, 'home']);
+Route::get('/services/banner', [PublicContentController::class, 'servicesBanner']);
 Route::get('/services', [PublicContentController::class, 'services']);
 Route::get('/services/{slug}', [PublicContentController::class, 'service']);
+Route::get('/booking/banner', [PublicContentController::class, 'bookingBanner']);
 Route::get('/booking', [PublicContentController::class, 'booking']);
 Route::get('/studio', [BookingController::class, 'studio']);
 Route::get('/seo', [SeoController::class, 'show']);
