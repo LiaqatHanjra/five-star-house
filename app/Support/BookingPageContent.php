@@ -38,7 +38,7 @@ class BookingPageContent
         return [
             'en' => [
                 'kicker' => 'Book a project',
-                'title' => "Let's work together",
+                'title' => "Choose a booking",
                 'lead' => "Have a project in mind? Tell us about it. We'll get back to you as soon as possible.",
                 'hint' => 'Looking for a listed service? Open it from the services page and use Book this service.',
                 'studio_kicker' => 'Studio rental',

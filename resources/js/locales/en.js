@@ -152,7 +152,7 @@ export default {
   },
   book: {
     kicker: 'Book a project',
-    title: "Let's work together",
+    title: "Choose a booking",
     lead: "Have a project in mind? Tell us about it. We'll get back to you as soon as possible.",
     studioKicker: 'Studio rental',
     studioTitle: 'Rent the studio',
