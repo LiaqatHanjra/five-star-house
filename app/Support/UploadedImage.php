@@ -8,7 +8,7 @@ use RuntimeException;
 
 class UploadedImage
 {
-    public static function replace(?UploadedFile $file, ?string $current, ?string $fallback = null): ?string
+    public static function test(?UploadedFile $file, ?string $current, ?string $fallback = null): ?string
     {
         if (! $file) {
             return $fallback !== null && $fallback !== '' ? $fallback : $current;
@@ -23,7 +23,7 @@ class UploadedImage
         return $disk->url($path);
     }
 
-    public static function test(
+    public static function replace(
         ?UploadedFile $file,
         ?string $current,
         ?string $fallback = null
