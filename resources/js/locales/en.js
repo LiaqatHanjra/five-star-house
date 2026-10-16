@@ -153,7 +153,7 @@ export default {
   book: {
     kicker: 'Book a project',
     title: "Choose a booking",
-    lead: "Have a project in mind? Tell us about it. We'll get back to you as soon as possible.",
+    lead: "Rent the studio by the hour, book it for an event, or book the owner. Studio rental starts at one hour. Taken hours show on the calendar.",
     studioKicker: 'Studio rental',
     studioTitle: 'Rent the studio',
     studioCopy: 'Hold the room for a shoot, a session, or any open hours. Minimum {n} {unit}.',
