@@ -16,7 +16,7 @@ const intro = computed(() => {
   const lines = String(text.heading || '').split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
   const tags = Array.isArray(text.tags) ? text.tags.map((tag) => String(tag).trim()).filter(Boolean) : []
   return {
-    lines: lines.length ? lines : ['CREATIVE', 'HOUSE'],
+    lines: lines.length ? lines : ['FIVE STAR', 'HOUSE'],
     description: text.description || t('home.lead'),
     tags,
     button: text.button || t('home.viewWork'),
